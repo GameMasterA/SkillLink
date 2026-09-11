@@ -1,0 +1,241 @@
+/* ==========================================================================
+   SkillLink — Apple-Inspired Liquid Glass Marketplace CSS (marketplace.css)
+   ========================================================================== */
+
+.marketplace-layout {
+  max-width: 1200px;
+  margin: 36px auto;
+  padding: 0 24px;
+}
+
+/* Category Strip Pills (Level 1 Glass) */
+.category-strip {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 32px;
+  overflow-x: auto;
+  padding-bottom: 10px;
+  scroll-behavior: smooth;
+  scrollbar-width: thin;
+}
+
+.category-card {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 22px;
+  border-radius: 30px;
+  background: var(--glass-l1-bg);
+  backdrop-filter: var(--glass-l1-blur);
+  -webkit-backdrop-filter: var(--glass-l1-blur);
+  border: 1px solid var(--glass-l1-border);
+  box-shadow: 0 4px 14px rgba(2, 132, 199, 0.05), inset 0 1px 1px rgba(255, 255, 255, 0.9);
+  color: var(--text-dark);
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.category-card:hover {
+  background: rgba(255, 255, 255, 0.85);
+  border-color: var(--primary);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 22px rgba(2, 132, 199, 0.15);
+}
+
+.category-card.active {
+  background: linear-gradient(135deg, #0284c7 0%, #2563eb 100%);
+  color: #ffffff;
+  border-color: transparent;
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(2, 132, 199, 0.4), inset 0 1px 1px rgba(255, 255, 255, 0.4);
+}
+
+.category-card .cat-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.category-card .cat-icon .svg-icon {
+  width: 18px;
+  height: 18px;
+}
+
+.category-card .cat-count {
+  font-size: 0.75rem;
+  padding: 2px 8px;
+  border-radius: 12px;
+  background: rgba(2, 132, 199, 0.1);
+  color: var(--primary);
+}
+
+.category-card.active .cat-count {
+  background: rgba(255, 255, 255, 0.25);
+  color: #ffffff;
+}
+
+/* Marketplace Grid Content */
+.marketplace-content {
+  display: grid;
+  grid-template-columns: 290px 1fr;
+  gap: 32px;
+}
+
+.filter-panel {
+  padding: 28px;
+  height: fit-content;
+  background: var(--glass-l2-bg);
+  backdrop-filter: var(--glass-l2-blur);
+  -webkit-backdrop-filter: var(--glass-l2-blur);
+  border: 1px solid var(--glass-l2-border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--glass-l2-shadow);
+}
+
+/* Search Bar (Capsule Glass) */
+.search-bar-wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+  margin-bottom: 24px;
+}
+
+.search-bar-wrap .search-icon {
+  position: absolute;
+  left: 18px;
+  color: var(--primary);
+  pointer-events: none;
+}
+
+.search-bar-wrap input {
+  padding-left: 48px;
+  width: 100%;
+  height: 52px;
+  border-radius: 30px;
+  background: rgba(255, 255, 255, 0.65);
+  backdrop-filter: blur(16px);
+  border: 1px solid var(--glass-l1-border);
+  box-shadow: 0 8px 24px -6px rgba(2, 132, 199, 0.08), inset 0 1px 1px rgba(255, 255, 255, 0.9);
+  font-size: 1rem;
+}
+
+.search-bar-wrap input:focus {
+  background: rgba(255, 255, 255, 0.92);
+  border-color: var(--primary);
+  box-shadow: 0 10px 30px rgba(2, 132, 199, 0.2), inset 0 1px 2px rgba(255, 255, 255, 1);
+}
+
+/* Job Cards Grid */
+.job-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.job-glass-card {
+  background: var(--glass-l2-bg);
+  backdrop-filter: var(--glass-l2-blur);
+  -webkit-backdrop-filter: var(--glass-l2-blur);
+  border: 1px solid var(--glass-l2-border);
+  border-radius: var(--radius-lg);
+  padding: 30px;
+  box-shadow: var(--glass-l2-shadow);
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  position: relative;
+  overflow: hidden;
+}
+
+.job-glass-card:hover {
+  background: rgba(255, 255, 255, 0.76);
+  box-shadow: 0 25px 55px -12px rgba(2, 132, 199, 0.22), inset 0 1px 2px rgba(255, 255, 255, 1);
+  transform: translateY(-4px);
+}
+
+.job-card-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 18px;
+  margin-bottom: 14px;
+}
+
+.job-title {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--text-dark);
+  text-decoration: none;
+  transition: color 0.2s ease;
+  letter-spacing: -0.02em;
+}
+
+.job-title:hover {
+  color: var(--primary);
+}
+
+.job-budget {
+  font-size: 1.2rem;
+  font-weight: 800;
+  color: var(--primary);
+  white-space: nowrap;
+}
+
+.job-summary {
+  font-size: 0.95rem;
+  color: var(--text-muted);
+  line-height: 1.6;
+  margin-bottom: 18px;
+}
+
+.skill-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 22px;
+}
+
+.skill-tag {
+  padding: 5px 14px;
+  border-radius: 20px;
+  background: rgba(255, 255, 255, 0.75);
+  border: 1px solid var(--glass-border-light);
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--text-main);
+  backdrop-filter: blur(8px);
+}
+
+.job-card-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-top: 18px;
+  border-top: 1px solid rgba(255, 255, 255, 0.6);
+  font-size: 0.85rem;
+  color: var(--text-light);
+}
+
+.save-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  transition: color 0.2s ease, transform 0.2s ease;
+}
+
+.save-btn:hover {
+  color: var(--accent-rose);
+  transform: scale(1.05);
+}
+
+.save-btn.saved {
+  color: var(--accent-rose);
+}

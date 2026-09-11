@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Create Account — SkillLink Marketplace</title>
+    <meta name="description" content="Create a free SkillLink account as a freelancer to discover remote work or as a client to hire talent.">
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/responsive.css">
+</head>
+<body style="min-height: 100vh; display: flex; flex-direction: column; justify-content: center; align-items: center; padding: 2rem 1rem;">
+
+    <!-- 6 Floating Liquid Glass Background Shapes -->
+    <div class="bg-shape shape-1"></div>
+    <div class="bg-shape shape-2"></div>
+    <div class="bg-shape shape-3"></div>
+    <div class="bg-shape shape-4"></div>
+    <div class="bg-shape shape-5"></div>
+    <div class="bg-shape shape-6"></div>
+
+    <main style="position: relative; z-index: 10; width: 100%; max-width: 720px; text-align: center;">
+        <a href="index.html" class="logo" style="margin-bottom: 2rem; display: inline-flex;">
+            <svg class="logo-mark-svg" viewBox="0 0 36 36" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <defs>
+                    <linearGradient id="logoGradReg" x1="2" y1="2" x2="34" y2="34" gradientUnits="userSpaceOnUse">
+                        <stop stop-color="#0284c7" />
+                        <stop offset="1" stop-color="#2563eb" />
+                    </linearGradient>
+                </defs>
+                <rect width="36" height="36" rx="10" fill="url(#logoGradReg)" />
+                <path d="M11 18C11 14.134 14.134 11 18 11C20.5 11 22.7 12.3 23.9 14.3" stroke="white" stroke-width="2.5" stroke-linecap="round" />
+                <path d="M25 18C25 21.866 21.866 25 18 25C15.5 25 13.3 23.7 12.1 21.7" stroke="white" stroke-width="2.5" stroke-linecap="round" />
+                <circle cx="18" cy="18" r="2.5" fill="white" />
+            </svg>
+            <span>Skill<span style="color: var(--primary);">Link</span></span>
+        </a>
+
+        <!-- Step 1: Role Selection -->
+        <section id="roleSelectionStep" class="glass-card" style="padding: 2.5rem; border-radius: var(--radius-xl);">
+            <div style="margin-bottom: 2rem;">
+                <span class="badge" style="margin-bottom: 8px;">Get Started</span>
+                <h1 style="font-size: 1.85rem; font-weight: 800; color: var(--text-dark); margin-bottom: 0.4rem;">What are you here to do?</h1>
+                <p style="color: var(--text-muted); font-size: 0.95rem;">Choose the option that best matches your career or business goals.</p>
+            </div>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-bottom: 2rem;">
+                <button type="button" class="glass-card" onclick="selectRole('freelancer')" style="display: flex; align-items: flex-start; gap: 1.25rem; padding: 1.6rem; border-radius: 18px; text-align: left; cursor: pointer; border: 1px solid var(--glass-border);">
+                    <div style="display: flex; align-items: center; justify-content: center; width: 48px; height: 48px; background: rgba(2,132,199,0.1); color: var(--primary); border-radius: 14px; flex-shrink: 0; border: 1px solid rgba(2,132,199,0.2);">
+                        <svg class="svg-icon" viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+                    </div>
+                    <div>
+                        <h2 style="font-size: 1.15rem; font-weight: 700; color: var(--text-dark); margin-bottom: 0.25rem;">I'm a Freelancer</h2>
+                        <p style="font-size: 0.85rem; color: var(--text-muted); line-height: 1.4;">Find projects, showcase your skills, and earn income safely.</p>
+                    </div>
+                </button>
+
+                <button type="button" class="glass-card" onclick="selectRole('client')" style="display: flex; align-items: flex-start; gap: 1.25rem; padding: 1.6rem; border-radius: 18px; text-align: left; cursor: pointer; border: 1px solid var(--glass-border);">
+                    <div style="display: flex; align-items: center; justify-content: center; width: 48px; height: 48px; background: rgba(2,132,199,0.1); color: var(--primary); border-radius: 14px; flex-shrink: 0; border: 1px solid rgba(2,132,199,0.2);">
+                        <svg class="svg-icon" viewBox="0 0 24 24"><rect x="2" y="7" width="20" height="14" rx="2" ry="2"></rect><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"></path></svg>
+                    </div>
+                    <div>
+                        <h2 style="font-size: 1.15rem; font-weight: 700; color: var(--text-dark); margin-bottom: 0.25rem;">I'm a Client</h2>
+                        <p style="font-size: 0.85rem; color: var(--text-muted); line-height: 1.4;">Post job offers, review proposals, and hire verified freelance talent.</p>
+                    </div>
+                </button>
+            </div>
+
+            <p style="margin-top: 1.75rem; font-size: 0.9rem; color: var(--text-muted);">
+                Already have an account? <a href="login.html" style="color: var(--primary); font-weight: 600; text-decoration: none;">Sign in</a>
+            </p>
+        </section>
+
+        <!-- Step 2: Dynamic Registration Form -->
+        <section id="registrationFormStep" class="glass-card hidden" style="padding: 2.5rem; border-radius: var(--radius-xl);">
+            <div style="margin-bottom: 2rem;">
+                <button type="button" id="backToRoleBtn" onclick="goBackToRoles()" style="background: none; border: none; color: var(--primary); font-weight: 600; font-size: 0.9rem; cursor: pointer; margin-bottom: 0.5rem; display:inline-flex; align-items:center; gap:6px;">
+                    <svg class="svg-icon" viewBox="0 0 24 24" style="width:14px; height:14px;"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
+                    <span>Change role</span>
+                </button>
+                <h1 id="formTitle" style="font-size: 1.85rem; font-weight: 800; color: var(--text-dark); margin-bottom: 0.4rem;">Create your account</h1>
+                <p id="formSubtitle" style="color: var(--text-muted); font-size: 0.95rem;">Fill out your details to get started.</p>
+            </div>
+
+            <form id="registerForm">
+                <input type="hidden" id="selectedRole" value="freelancer">
+
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.2rem; margin-bottom: 1.2rem;">
+                    <div style="text-align: left;">
+                        <label for="firstName">First Name</label>
+                        <input type="text" id="firstName" placeholder="John" required style="width: 100%;">
+                    </div>
+                    <div style="text-align: left;">
+                        <label for="lastName">Last Name</label>
+                        <input type="text" id="lastName" placeholder="Doe" required style="width: 100%;">
+                    </div>
+                </div>
+
+                <div style="text-align: left; margin-bottom: 1.2rem;">
+                    <label for="regEmail">Email Address</label>
+                    <input type="email" id="regEmail" placeholder="you@example.com" required style="width: 100%;">
+                </div>
+
+                <div style="text-align: left; margin-bottom: 1.2rem;">
+                    <label for="regPassword">Password</label>
+                    <input type="password" id="regPassword" placeholder="Create a strong password" required style="width: 100%;">
+                </div>
+
+                <!-- Freelancer Field -->
+                <div id="freelancerFields" style="text-align: left; margin-bottom: 1.2rem;">
+                    <label for="primarySkill">Primary Skill</label>
+                    <select id="primarySkill" style="width: 100%;">
+                        <option value="Web Development">Web Development</option>
+                        <option value="UI/UX Design">UI/UX Design</option>
+                        <option value="Graphic Design">Graphic Design</option>
+                        <option value="Writing">Writing & Copywriting</option>
+                        <option value="Marketing">Digital Marketing</option>
+                        <option value="Video Editing">Video Editing</option>
+                    </select>
+                </div>
+
+                <!-- Client Field -->
+                <div id="clientFields" class="hidden" style="text-align: left; margin-bottom: 1.2rem;">
+                    <label for="companyName">Company / Organization</label>
+                    <input type="text" id="companyName" placeholder="e.g. Apex Tech Ventures" style="width: 100%;">
+                </div>
+
+                <button type="submit" class="btn btn-primary" style="width: 100%; padding: 0.85rem; font-weight: 700; margin-top: 0.5rem;">Create Account</button>
+                <div class="form-alert" id="regAlert" style="margin-top: 1rem; font-size: 0.85rem; display: none;"></div>
+            </form>
+
+            <p style="margin-top: 1.75rem; font-size: 0.9rem; color: var(--text-muted);">
+                Already have an account? <a href="login.html" style="color: var(--primary); font-weight: 600; text-decoration: none;">Sign in</a>
+            </p>
+        </section>
+    </main>
+
+    <script src="js/data.js"></script>
+    <script src="js/auth.js"></script>
+    <script src="js/main.js"></script>
+</body>
+</html>

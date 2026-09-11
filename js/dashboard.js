@@ -1,0 +1,358 @@
+/**
+ * SkillLink — Central Dashboard System Engine (js/dashboard.js)
+ * Controls sidebar navigation toggles, stats counters, contract trackers, job post submission, and admin control panels.
+ */
+
+document.addEventListener("DOMContentLoaded", () => {
+    initDashboardCore();
+});
+
+function initDashboardCore() {
+    setupSidebarToggle();
+    renderUserData();
+
+    initFreelancerDashboard();
+    initClientDashboard();
+    initAdminDashboard();
+}
+
+function setupSidebarToggle() {
+    const toggleBtn = document.getElementById("sidebarToggle") || document.getElementById("mobileNavToggle");
+    const sidebar = document.getElementById("sidebar");
+
+    let overlay = document.querySelector(".sidebar-overlay");
+    if (!overlay && sidebar) {
+        overlay = document.createElement("div");
+        overlay.className = "sidebar-overlay";
+        document.body.appendChild(overlay);
+    }
+
+    if (toggleBtn && sidebar) {
+        toggleBtn.addEventListener("click", () => {
+            sidebar.classList.toggle("open");
+            if (overlay) overlay.classList.toggle("active");
+        });
+    }
+
+    if (overlay && sidebar) {
+        overlay.addEventListener("click", () => {
+            sidebar.classList.remove("open");
+            overlay.classList.remove("active");
+        });
+    }
+}
+
+function renderUserData() {
+    const user = typeof getCurrentUser === "function" ? getCurrentUser() : null;
+    if (!user) return;
+
+    const nameLabels = document.querySelectorAll(".user-display-name");
+    nameLabels.forEach(el => {
+        el.textContent = user.name || `${user.firstName || ''} ${user.lastName || ''}`.trim() || "User";
+    });
+
+    const roleLabels = document.querySelectorAll(".user-display-role");
+    roleLabels.forEach(el => {
+        el.textContent = user.role ? (user.role.charAt(0).toUpperCase() + user.role.slice(1)) : "User";
+    });
+
+    const avatarLabels = document.querySelectorAll(".user-avatar-initial");
+    avatarLabels.forEach(el => {
+        const char = user.firstName ? user.firstName.charAt(0) : (user.name ? user.name.charAt(0) : "U");
+        el.textContent = char.toUpperCase();
+    });
+}
+
+/**
+ * FREELANCER DASHBOARD ENGINE
+ */
+function initFreelancerDashboard() {
+    const isFreelancerDash = document.getElementById("freelancerDashboardRoot");
+    if (!isFreelancerDash) return;
+
+    if (typeof enforceRoleAccess === "function") {
+        enforceRoleAccess("freelancer");
+    }
+
+    renderFreelancerStats();
+    renderFreelancerActiveProjects();
+    renderFreelancerProposalsTable();
+    renderFreelancerEarningsSummary();
+}
+
+function renderFreelancerStats() {
+    const user = typeof getCurrentUser === "function" ? getCurrentUser() : null;
+    const userId = user ? user.id : "usr-demo-fl";
+
+    const projects = typeof getStoredProjects === "function" ? getStoredProjects() : [];
+    const proposals = typeof getStoredProposals === "function" ? getStoredProposals() : [];
+    const transactions = typeof getStoredTransactions === "function" ? getStoredTransactions() : [];
+
+    const activeProjects = projects.filter(p => p.freelancerId === userId && p.status === "active");
+    const completedProjects = projects.filter(p => p.freelancerId === userId && p.status === "completed");
+    const myProposals = proposals.filter(p => p.freelancerId === userId);
+
+    const totalEarnings = transactions
+        .filter(t => t.userId === userId && t.type === "earning" && t.status === "completed")
+        .reduce((sum, t) => sum + Number(t.amount || 0), 180000);
+
+    const elemEarnings = document.getElementById("statTotalEarnings");
+    if (elemEarnings) elemEarnings.textContent = typeof formatCurrency === "function" ? formatCurrency(totalEarnings) : `₦${totalEarnings.toLocaleString()}`;
+
+    const elemActive = document.getElementById("statActiveProjects");
+    if (elemActive) elemActive.textContent = activeProjects.length || 1;
+
+    const elemProp = document.getElementById("statSubmittedProposals");
+    if (elemProp) elemProp.textContent = myProposals.length || 1;
+
+    const elemComp = document.getElementById("statCompletedJobs");
+    if (elemComp) elemComp.textContent = completedProjects.length + (user?.completedJobs || 28);
+}
+
+function renderFreelancerActiveProjects() {
+    const container = document.getElementById("freelancerActiveProjectsList");
+    if (!container) return;
+
+    const projects = typeof getStoredProjects === "function" ? getStoredProjects() : [];
+    const active = projects.filter(p => p.status === "active");
+
+    if (active.length === 0) {
+        container.innerHTML = `<p style="color:var(--text-muted); padding:16px;">No active contracts running.</p>`;
+        return;
+    }
+
+    container.innerHTML = active.map(p => `
+        <div class="glass-card" style="padding: 20px; border-radius: 16px; margin-bottom: 16px;">
+            <div style="display:flex; justify-content:space-between; align-items:flex-start; flex-wrap:wrap; gap:12px;">
+                <div>
+                    <h4 style="font-size:16px; color:var(--text-dark);">${p.jobTitle}</h4>
+                    <p style="font-size:13px; color:var(--text-muted);">Client: ${p.clientName} • Started: ${p.startDate}</p>
+                </div>
+                <span class="status-indicator">${p.status.toUpperCase()}</span>
+            </div>
+            <div style="margin-top:16px;">
+                <div style="display:flex; justify-content:space-between; font-size:12px; color:var(--text-muted); margin-bottom:6px;">
+                    <span>Contract Deliverable Progress</span>
+                    <span style="font-weight:700;">${p.progress}%</span>
+                </div>
+                <div style="width:100%; height:8px; background:rgba(0,0,0,0.08); border-radius:4px; overflow:hidden;">
+                    <div style="width:${p.progress}%; height:100%; background:linear-gradient(90deg, var(--primary), var(--accent-blue)); border-radius:4px;"></div>
+                </div>
+            </div>
+        </div>
+    `).join("");
+}
+
+function renderFreelancerProposalsTable() {
+    const container = document.getElementById("freelancerProposalsTable");
+    if (!container) return;
+
+    const proposals = typeof getStoredProposals === "function" ? getStoredProposals() : [];
+    if (proposals.length === 0) {
+        container.innerHTML = `<tr><td colspan="5" style="text-align:center; padding:20px; color:var(--text-muted);">No proposals submitted yet.</td></tr>`;
+        return;
+    }
+
+    container.innerHTML = proposals.map(p => `
+        <tr>
+            <td><strong>${p.jobTitle || 'Job Proposal'}</strong></td>
+            <td>${p.clientName || 'Client'}</td>
+            <td style="font-weight:700; color:var(--primary);">${typeof formatCurrency === "function" ? formatCurrency(p.bidAmount || p.price) : '₦' + (p.bidAmount || p.price)}</td>
+            <td><span class="status-indicator">${p.status || 'Pending'}</span></td>
+            <td><button onclick="if(typeof showToast === 'function') showToast('Proposal details opened', 'info')" class="btn btn-outline btn-sm">View</button></td>
+        </tr>
+    `).join("");
+}
+
+function renderFreelancerEarningsSummary() {
+    const table = document.getElementById("freelancerTransactionsTable");
+    if (!table) return;
+
+    const transactions = typeof getStoredTransactions === "function" ? getStoredTransactions() : [];
+    table.innerHTML = transactions.map(t => `
+        <tr>
+            <td><strong>${t.title}</strong></td>
+            <td><span class="status-indicator">${t.type.toUpperCase()}</span></td>
+            <td>${t.date}</td>
+            <td style="font-weight:700; color:${t.type === 'earning' ? 'var(--accent-emerald)' : 'var(--text-dark)'};">${typeof formatCurrency === "function" ? formatCurrency(t.amount) : '₦' + t.amount}</td>
+            <td><span class="status-indicator">${t.status}</span></td>
+        </tr>
+    `).join("");
+}
+
+/**
+ * CLIENT DASHBOARD ENGINE
+ */
+function initClientDashboard() {
+    const isClientDash = document.getElementById("clientDashboardRoot");
+    if (!isClientDash) return;
+
+    if (typeof enforceRoleAccess === "function") {
+        enforceRoleAccess("client");
+    }
+
+    renderClientStats();
+    renderClientJobsTable();
+    setupPostJobForm();
+}
+
+function renderClientStats() {
+    const user = typeof getCurrentUser === "function" ? getCurrentUser() : null;
+    const userId = user ? user.id : "usr-demo-cl";
+
+    const jobs = typeof getStoredJobs === "function" ? getStoredJobs() : [];
+    const proposals = typeof getStoredProposals === "function" ? getStoredProposals() : [];
+    const projects = typeof getStoredProjects === "function" ? getStoredProjects() : [];
+
+    const myJobs = jobs.filter(j => j.clientId === userId || j.clientId === "usr-demo-cl");
+    const myProjects = projects.filter(p => p.clientId === userId || p.clientId === "usr-demo-cl");
+    const openJobs = myJobs.filter(j => j.status === "open");
+
+    const elemJobs = document.getElementById("clientStatJobsPosted");
+    if (elemJobs) elemJobs.textContent = myJobs.length;
+
+    const elemOpen = document.getElementById("clientStatOpenJobs");
+    if (elemOpen) elemOpen.textContent = openJobs.length;
+
+    const elemProj = document.getElementById("clientStatActiveProjects");
+    if (elemProj) elemProj.textContent = myProjects.filter(p => p.status === "active").length || 1;
+
+    const elemProp = document.getElementById("clientStatProposalsReceived");
+    if (elemProp) elemProp.textContent = proposals.length || 8;
+}
+
+function renderClientJobsTable() {
+    const table = document.getElementById("clientJobsTable");
+    if (!table) return;
+
+    const jobs = typeof getStoredJobs === "function" ? getStoredJobs() : [];
+    const myJobs = jobs.filter(j => j.clientId === "usr-demo-cl" || j.clientId === getCurrentUser()?.id);
+
+    if (myJobs.length === 0) {
+        table.innerHTML = `<tr><td colspan="5" style="text-align:center; padding:20px; color:var(--text-muted);">No jobs posted yet.</td></tr>`;
+        return;
+    }
+
+    table.innerHTML = myJobs.map(j => `
+        <tr>
+            <td><strong>${j.title}</strong></td>
+            <td>${j.category}</td>
+            <td style="font-weight:700; color:var(--primary);">${typeof formatCurrency === "function" ? formatCurrency(j.budgetMax) : '₦' + j.budgetMax}</td>
+            <td>${j.proposalsCount || 0} applicants</td>
+            <td><span class="status-indicator">${j.status.toUpperCase()}</span></td>
+        </tr>
+    `).join("");
+}
+
+function setupPostJobForm() {
+    const form = document.getElementById("postJobForm");
+    if (!form) return;
+
+    form.addEventListener("submit", (e) => {
+        e.preventDefault();
+        
+        const user = typeof getCurrentUser === "function" ? getCurrentUser() : null;
+        
+        const title = document.getElementById("jobTitle")?.value.trim();
+        const category = document.getElementById("jobCategory")?.value;
+        const budgetMin = Number(document.getElementById("budgetMin")?.value || 0);
+        const budgetMax = Number(document.getElementById("budgetMax")?.value || 0);
+        const description = document.getElementById("jobDescription")?.value.trim();
+        const skillsRaw = document.getElementById("jobSkills")?.value || "";
+        const skills = skillsRaw.split(",").map(s => s.trim()).filter(Boolean);
+
+        const newJob = {
+            id: "job-" + Date.now(),
+            title: title,
+            summary: description.substring(0, 100) + "...",
+            description: description,
+            category: category,
+            budgetMin: budgetMin,
+            budgetMax: budgetMax,
+            experience: "Intermediate",
+            type: "Fixed Price",
+            duration: "1-2 Weeks",
+            postedAgo: "Just now",
+            postedTimestamp: Date.now(),
+            proposalsCount: 0,
+            skills: skills.length > 0 ? skills : ["Web Development"],
+            status: "open",
+            clientId: user ? user.id : "usr-demo-cl",
+            client: {
+                id: user ? user.id : "usr-demo-cl",
+                name: user ? user.name : "Sarah Miller",
+                rating: 4.9,
+                jobsPosted: 1
+            }
+        };
+
+        const jobs = typeof getStoredJobs === "function" ? getStoredJobs() : [];
+        jobs.unshift(newJob);
+        if (typeof saveStoredJobs === "function") {
+            saveStoredJobs(jobs);
+        }
+
+        if (typeof showToast === "function") {
+            showToast("Job posted successfully! Live in marketplace.", "success");
+        }
+
+        setTimeout(() => {
+            window.location.href = "my-jobs.html";
+        }, 1000);
+    });
+}
+
+/**
+ * ADMIN DASHBOARD ENGINE
+ */
+function initAdminDashboard() {
+    const isAdminDash = document.getElementById("adminDashboardRoot");
+    if (!isAdminDash) return;
+
+    if (typeof enforceRoleAccess === "function") {
+        enforceRoleAccess("admin");
+    }
+
+    renderAdminStats();
+    renderAdminUsersTable();
+}
+
+function renderAdminStats() {
+    const users = typeof getUsers === "function" ? getUsers() : [];
+    const jobs = typeof getStoredJobs === "function" ? getStoredJobs() : [];
+    const projects = typeof getStoredProjects === "function" ? getStoredProjects() : [];
+
+    const elemUsers = document.getElementById("adminStatTotalUsers");
+    if (elemUsers) elemUsers.textContent = users.length + 42;
+
+    const elemJobs = document.getElementById("adminStatTotalJobs");
+    if (elemJobs) elemJobs.textContent = jobs.length + 120;
+
+    const elemProjects = document.getElementById("adminStatProjects");
+    if (elemProjects) elemProjects.textContent = projects.length + 85;
+
+    const elemRevenue = document.getElementById("adminStatPlatformRevenue");
+    if (elemRevenue) elemRevenue.textContent = typeof formatCurrency === "function" ? formatCurrency(845000) : "₦845,000";
+}
+
+function renderAdminUsersTable() {
+    const table = document.getElementById("adminUsersTable");
+    if (!table) return;
+
+    const users = typeof getUsers === "function" ? getUsers() : [];
+    table.innerHTML = users.map(u => `
+        <tr>
+            <td><strong>${u.name || `${u.firstName} ${u.lastName}`}</strong></td>
+            <td>${u.email}</td>
+            <td><span class="status-indicator">${u.role.toUpperCase()}</span></td>
+            <td><span class="badge badge-success">ACTIVE</span></td>
+            <td><button onclick="if(typeof showToast === 'function') showToast('User privileges updated', 'info')" class="btn btn-outline btn-sm">Manage</button></td>
+        </tr>
+    `).join("");
+}
+
+// Window scope exports
+window.initDashboardCore = initDashboardCore;
+window.renderFreelancerStats = renderFreelancerStats;
+window.renderClientStats = renderClientStats;
+window.renderAdminStats = renderAdminStats;

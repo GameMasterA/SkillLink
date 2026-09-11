@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Profile — Freelancer Workspace | SkillLink</title>
+    <link rel="stylesheet" href="../css/style.css">
+    <link rel="stylesheet" href="../css/dashboard.css">
+    <link rel="stylesheet" href="../css/responsive.css">
+</head>
+<body id="freelancerDashboardRoot">
+
+    <!-- 6 Floating Liquid Glass Background Shapes -->
+    <div class="bg-shape shape-1"></div>
+    <div class="bg-shape shape-2"></div>
+    <div class="bg-shape shape-3"></div>
+    <div class="bg-shape shape-4"></div>
+    <div class="bg-shape shape-5"></div>
+    <div class="bg-shape shape-6"></div>
+
+    <div class="dashboard-layout">
+        <aside class="sidebar" id="sidebar">
+            <div>
+                <a href="../index.html" class="logo">
+                    <svg class="logo-mark-svg" viewBox="0 0 36 36" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <defs>
+                            <linearGradient id="logoGradFlProf" x1="2" y1="2" x2="34" y2="34" gradientUnits="userSpaceOnUse">
+                                <stop stop-color="#0284c7" />
+                                <stop offset="1" stop-color="#2563eb" />
+                            </linearGradient>
+                        </defs>
+                        <rect width="36" height="36" rx="10" fill="url(#logoGradFlProf)" />
+                        <path d="M11 18C11 14.134 14.134 11 18 11C20.5 11 22.7 12.3 23.9 14.3" stroke="white" stroke-width="2.5" stroke-linecap="round" />
+                        <path d="M25 18C25 21.866 21.866 25 18 25C15.5 25 13.3 23.7 12.1 21.7" stroke="white" stroke-width="2.5" stroke-linecap="round" />
+                        <circle cx="18" cy="18" r="2.5" fill="white" />
+                    </svg>
+                    <span>Skill<span style="color: var(--primary);">Link</span></span>
+                </a>
+                <ul class="nav-list">
+                    <li><a href="dashboard.html" class="nav-link">
+                        <svg class="svg-icon" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>
+                        <span>Overview</span>
+                    </a></li>
+                    <li><a href="../jobs.html" class="nav-link">
+                        <svg class="svg-icon" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+                        <span>Find Work</span>
+                    </a></li>
+                    <li><a href="proposals.html" class="nav-link">
+                        <svg class="svg-icon" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line></svg>
+                        <span>My Proposals</span>
+                    </a></li>
+                    <li><a href="projects.html" class="nav-link">
+                        <svg class="svg-icon" viewBox="0 0 24 24"><rect x="2" y="7" width="20" height="14" rx="2" ry="2"></rect><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"></path></svg>
+                        <span>Active Contracts</span>
+                    </a></li>
+                    <li><a href="earnings.html" class="nav-link">
+                        <svg class="svg-icon" viewBox="0 0 24 24"><line x1="12" y1="1" x2="12" y2="23"></line><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path></svg>
+                        <span>Earnings</span>
+                    </a></li>
+                    <li><a href="portfolio.html" class="nav-link">
+                        <svg class="svg-icon" viewBox="0 0 24 24"><polygon points="12 2 2 7 12 12 22 7 12 2"></polygon><polyline points="2 17 12 22 22 17"></polyline><polyline points="2 12 12 17 22 12"></polyline></svg>
+                        <span>Portfolio</span>
+                    </a></li>
+                    <li><a href="messages.html" class="nav-link">
+                        <svg class="svg-icon" viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
+                        <span>Messages</span>
+                    </a></li>
+                    <li><a href="profile.html" class="nav-link active">
+                        <svg class="svg-icon" viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+                        <span>Profile</span>
+                    </a></li>
+                    <li><a href="settings.html" class="nav-link">
+                        <svg class="svg-icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+                        <span>Settings</span>
+                    </a></li>
+                </ul>
+            </div>
+            <div style="padding-top: 20px; border-top: 1px solid var(--glass-border);">
+                <button onclick="handleLogout()" class="btn btn-outline" style="width: 100%; justify-content: center; gap:8px;">
+                    <svg class="svg-icon" viewBox="0 0 24 24" style="width:16px; height:16px;"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg>
+                    <span>Sign Out</span>
+                </button>
+            </div>
+        </aside>
+
+        <div class="main-wrapper">
+            <header class="top-navbar">
+                <button class="mobile-toggle" id="sidebarToggle" aria-label="Toggle Navigation">
+                    <svg class="svg-icon" viewBox="0 0 24 24"><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg>
+                </button>
+                <h2 style="font-size: 1.25rem; font-weight: 700; color: var(--text-dark);">Public Freelancer Profile</h2>
+                <div style="display: flex; align-items: center; gap: 10px;">
+                    <div class="user-avatar-initial" style="width: 38px; height: 38px; border-radius: 50%; background: linear-gradient(135deg, var(--primary), var(--accent-blue)); color: #fff; display: flex; align-items: center; justify-content: center; font-weight: 700;">J</div>
+                    <span class="user-display-name" style="font-weight: 700; font-size: 0.9rem;">John Doe</span>
+                </div>
+            </header>
+
+            <main style="padding: 28px;">
+                <div class="glass-card" style="padding: 36px; border-radius: var(--radius-xl); max-width: 820px; margin: 0 auto;">
+                    <div style="display: flex; align-items: center; gap: 24px; margin-bottom: 28px; flex-wrap: wrap;">
+                        <div class="user-avatar-initial" style="width: 84px; height: 84px; border-radius: 50%; background: linear-gradient(135deg, var(--primary), var(--accent-blue)); color: #fff; display: flex; align-items: center; justify-content: center; font-size: 32px; font-weight: 800; box-shadow: 0 8px 25px rgba(2,132,199,0.35);">J</div>
+                        <div>
+                            <h1 class="user-display-name" style="font-size: 1.85rem; font-weight: 800; color: var(--text-dark);">John Doe</h1>
+                            <p style="color: var(--primary); font-weight: 700; font-size: 1.05rem; margin-top: 2px;">Frontend Developer & UI Specialist</p>
+                            <p style="font-size: 0.85rem; color: var(--text-muted); margin-top: 4px; display:flex; align-items:center; gap:6px;">
+                                <svg class="svg-icon" viewBox="0 0 24 24" style="width:14px; height:14px; fill:#f59e0b; stroke:#f59e0b;"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
+                                <span>4.9 Rating (32 Reviews)</span> • <span>28 Completed Projects</span>
+                            </p>
+                        </div>
+                    </div>
+
+                    <form id="profileEditForm" onsubmit="event.preventDefault(); if(typeof showToast==='function') showToast('Profile updated successfully!', 'success');">
+                        <div style="margin-bottom: 16px;">
+                            <label>Professional Title</label>
+                            <input type="text" id="profTitle" value="Frontend Developer & UI Specialist" style="width: 100%;">
+                        </div>
+
+                        <div style="margin-bottom: 16px;">
+                            <label>Bio Summary</label>
+                            <textarea id="profBio" rows="4" style="width: 100%;">I build clean, high-performance, and responsive websites for growing businesses and tech startups using modern HTML, CSS, and vanilla JS.</textarea>
+                        </div>
+
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px;">
+                            <div>
+                                <label>Starting Budget (₦)</label>
+                                <input type="number" id="profRate" value="50000" style="width: 100%;">
+                            </div>
+                            <div>
+                                <label>Availability</label>
+                                <select id="profAvailability" style="width: 100%;">
+                                    <option value="Available Now">Available Now</option>
+                                    <option value="Available Next Week">Available Next Week</option>
+                                    <option value="Busy / Contracted">Busy / Contracted</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div style="margin-bottom: 24px;">
+                            <label>Skills (comma separated)</label>
+                            <input type="text" id="profSkills" value="HTML, CSS, JavaScript, Responsive Design, UI Design" style="width: 100%;">
+                        </div>
+
+                        <button type="submit" class="btn btn-primary" style="padding: 12px 28px;">Save Profile Changes</button>
+                    </form>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <script src="../js/data.js"></script>
+    <script src="../js/auth.js"></script>
+    <script src="../js/main.js"></script>
+    <script src="../js/dashboard.js"></script>
+</body>
+</html>

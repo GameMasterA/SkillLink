@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Find Talent — SkillLink Marketplace</title>
+    <meta name="description" content="Hire top-tier verified freelance developers, UI/UX designers, copywriters, and visual artists on SkillLink.">
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/dashboard.css">
+    <link rel="stylesheet" href="css/marketplace.css">
+    <link rel="stylesheet" href="css/responsive.css">
+</head>
+<body>
+
+    <!-- 6 Floating Liquid Glass Background Shapes -->
+    <div class="bg-shape shape-1"></div>
+    <div class="bg-shape shape-2"></div>
+    <div class="bg-shape shape-3"></div>
+    <div class="bg-shape shape-4"></div>
+    <div class="bg-shape shape-5"></div>
+    <div class="bg-shape shape-6"></div>
+
+    <header class="navbar">
+        <a href="index.html" class="logo">
+            <svg class="logo-mark-svg" viewBox="0 0 36 36" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <defs>
+                    <linearGradient id="logoGradTalent" x1="2" y1="2" x2="34" y2="34" gradientUnits="userSpaceOnUse">
+                        <stop stop-color="#0284c7" />
+                        <stop offset="1" stop-color="#2563eb" />
+                    </linearGradient>
+                </defs>
+                <rect width="36" height="36" rx="10" fill="url(#logoGradTalent)" />
+                <path d="M11 18C11 14.134 14.134 11 18 11C20.5 11 22.7 12.3 23.9 14.3" stroke="white" stroke-width="2.5" stroke-linecap="round" />
+                <path d="M25 18C25 21.866 21.866 25 18 25C15.5 25 13.3 23.7 12.1 21.7" stroke="white" stroke-width="2.5" stroke-linecap="round" />
+                <circle cx="18" cy="18" r="2.5" fill="white" />
+            </svg>
+            <span>Skill<span style="color: var(--primary);">Link</span></span>
+        </a>
+        <nav class="nav-links" id="navLinks">
+            <a href="jobs.html">Find Work</a>
+            <a href="freelancers.html" class="active">Find Talent</a>
+            <a href="about.html">About Us</a>
+        </nav>
+        <div class="nav-actions" id="navAuthActions">
+            <div class="auth-btn-group" id="authButtons" style="display: flex; gap: 12px; align-items: center;">
+                <a href="login.html" class="btn btn-outline btn-sm">Sign In</a>
+                <a href="register.html" class="btn btn-primary btn-sm">Get Started</a>
+            </div>
+        </div>
+        <button class="mobile-nav-toggle" id="mobileMenuBtn" aria-label="Toggle Navigation">
+            <span></span><span></span><span></span>
+        </button>
+    </header>
+
+    <div class="marketplace-layout">
+        <!-- Hero Search Header -->
+        <section class="glass-card" style="padding: 2.5rem; margin-bottom: 2rem; text-align: center; border-radius: var(--radius-xl);">
+            <span class="badge" style="margin-bottom: 12px;">Top Talent</span>
+            <h1 style="font-size: 2.3rem; font-weight: 800; color: var(--text-dark); margin-bottom: 8px;">Hire Verified Remote Experts</h1>
+            <p style="color: var(--text-muted); font-size: 1rem; max-width: 600px; margin: 0 auto 24px;">Connect directly with vetted freelancers specializing in web development, product design, and creative media.</p>
+
+            <div class="search-bar-wrap" style="max-width: 720px; margin: 0 auto;">
+                <svg class="svg-icon search-icon" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+                <input type="text" id="freelancerSearchInput" placeholder="Search freelancers by name, skill, or title (e.g. John, UI/UX, Figma)...">
+            </div>
+        </section>
+
+        <!-- Freelancers Grid -->
+        <div id="freelancersList" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 24px;"></div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-bottom">
+                <p>&copy; <span id="currentYear">2026</span> SkillLink Marketplace. All rights reserved.</p>
+            </div>
+        </div>
+    </footer>
+
+    <script src="js/data.js"></script>
+    <script src="js/auth.js"></script>
+    <script src="js/main.js"></script>
+    <script src="js/jobs.js"></script>
+</body>
+</html>

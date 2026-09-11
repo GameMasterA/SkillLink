@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Freelancer Profile — SkillLink Marketplace</title>
+    <meta name="description" content="View freelancer skills, completed projects, client reviews, and hire directly on SkillLink.">
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/dashboard.css">
+    <link rel="stylesheet" href="css/marketplace.css">
+    <link rel="stylesheet" href="css/responsive.css">
+</head>
+<body>
+
+    <!-- 6 Floating Liquid Glass Background Shapes -->
+    <div class="bg-shape shape-1"></div>
+    <div class="bg-shape shape-2"></div>
+    <div class="bg-shape shape-3"></div>
+    <div class="bg-shape shape-4"></div>
+    <div class="bg-shape shape-5"></div>
+    <div class="bg-shape shape-6"></div>
+
+    <header class="navbar">
+        <a href="index.html" class="logo">
+            <svg class="logo-mark-svg" viewBox="0 0 36 36" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <defs>
+                    <linearGradient id="logoGradFlProf" x1="2" y1="2" x2="34" y2="34" gradientUnits="userSpaceOnUse">
+                        <stop stop-color="#0284c7" />
+                        <stop offset="1" stop-color="#2563eb" />
+                    </linearGradient>
+                </defs>
+                <rect width="36" height="36" rx="10" fill="url(#logoGradFlProf)" />
+                <path d="M11 18C11 14.134 14.134 11 18 11C20.5 11 22.7 12.3 23.9 14.3" stroke="white" stroke-width="2.5" stroke-linecap="round" />
+                <path d="M25 18C25 21.866 21.866 25 18 25C15.5 25 13.3 23.7 12.1 21.7" stroke="white" stroke-width="2.5" stroke-linecap="round" />
+                <circle cx="18" cy="18" r="2.5" fill="white" />
+            </svg>
+            <span>Skill<span style="color: var(--primary);">Link</span></span>
+        </a>
+        <nav class="nav-links" id="navLinks">
+            <a href="freelancers.html" style="display:flex; align-items:center; gap:6px;">
+                <svg class="svg-icon" viewBox="0 0 24 24" style="width:16px; height:16px;"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
+                <span>Back to Talent Directory</span>
+            </a>
+        </nav>
+        <div class="nav-actions" id="navAuthActions">
+            <div class="auth-btn-group" id="authButtons" style="display: flex; gap: 12px; align-items: center;">
+                <a href="login.html" class="btn btn-outline btn-sm">Sign In</a>
+                <a href="register.html" class="btn btn-primary btn-sm">Get Started</a>
+            </div>
+        </div>
+        <button class="mobile-nav-toggle" id="mobileMenuBtn" aria-label="Toggle Navigation">
+            <span></span><span></span><span></span>
+        </button>
+    </header>
+
+    <main class="container" style="max-width: 920px; margin: 40px auto 60px;">
+        <article class="glass-card" id="freelancerProfileCard" style="padding: 40px; border-radius: var(--radius-xl);"></article>
+    </main>
+
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-bottom">
+                <p>&copy; <span id="currentYear">2026</span> SkillLink Marketplace. All rights reserved.</p>
+            </div>
+        </div>
+    </footer>
+
+    <script src="js/data.js"></script>
+    <script src="js/auth.js"></script>
+    <script src="js/main.js"></script>
+    <script src="js/jobs.js"></script>
+</body>
+</html>

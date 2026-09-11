@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>About Us — SkillLink Marketplace</title>
+    <meta name="description" content="Learn about SkillLink's mission to empower freelancers and businesses with transparent contracts, escrow protection, and liquid glass design.">
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/responsive.css">
+</head>
+<body>
+
+    <!-- 6 Floating Liquid Glass Background Shapes -->
+    <div class="bg-shape shape-1"></div>
+    <div class="bg-shape shape-2"></div>
+    <div class="bg-shape shape-3"></div>
+    <div class="bg-shape shape-4"></div>
+    <div class="bg-shape shape-5"></div>
+    <div class="bg-shape shape-6"></div>
+
+    <!-- Navigation Header -->
+    <header class="navbar">
+        <a href="index.html" class="logo">
+            <svg class="logo-mark-svg" viewBox="0 0 36 36" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <defs>
+                    <linearGradient id="logoGradAbout" x1="2" y1="2" x2="34" y2="34" gradientUnits="userSpaceOnUse">
+                        <stop stop-color="#0284c7" />
+                        <stop offset="1" stop-color="#2563eb" />
+                    </linearGradient>
+                </defs>
+                <rect width="36" height="36" rx="10" fill="url(#logoGradAbout)" />
+                <path d="M11 18C11 14.134 14.134 11 18 11C20.5 11 22.7 12.3 23.9 14.3" stroke="white" stroke-width="2.5" stroke-linecap="round" />
+                <path d="M25 18C25 21.866 21.866 25 18 25C15.5 25 13.3 23.7 12.1 21.7" stroke="white" stroke-width="2.5" stroke-linecap="round" />
+                <circle cx="18" cy="18" r="2.5" fill="white" />
+            </svg>
+            <span>Skill<span style="color: var(--primary);">Link</span></span>
+        </a>
+        <nav class="nav-links" id="navLinks">
+            <a href="jobs.html">Find Work</a>
+            <a href="freelancers.html">Find Talent</a>
+            <a href="about.html" class="active">About Us</a>
+        </nav>
+        <div class="nav-actions" id="navAuthActions">
+            <div class="auth-btn-group" id="authButtons" style="display: flex; gap: 12px; align-items: center;">
+                <a href="login.html" class="btn btn-outline btn-sm">Sign In</a>
+                <a href="register.html" class="btn btn-primary btn-sm">Get Started</a>
+            </div>
+        </div>
+        <button class="mobile-nav-toggle" id="mobileMenuBtn" aria-label="Toggle Navigation">
+            <span></span><span></span><span></span>
+        </button>
+    </header>
+
+    <!-- Main Content -->
+    <main style="padding: 80px 0 60px;">
+        <div class="container">
+            <div style="text-align: center; margin-bottom: 48px;">
+                <span class="badge" style="margin-bottom: 12px;">Our Story & Purpose</span>
+                <h1 style="font-size: 2.8rem; font-weight: 800; color: var(--text-dark); line-height: 1.2;">
+                    Empowering the Future of <br><span style="background: linear-gradient(135deg, #0284c7 0%, #2563eb 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">Remote Talent & Digital Work</span>
+                </h1>
+                <p style="font-size: 1.1rem; color: var(--text-muted); max-width: 720px; margin: 16px auto 0; line-height: 1.6;">
+                    SkillLink was founded to bridge the gap between world-class businesses and ambitious digital freelancers. We combine cutting-edge liquid glass aesthetics with escrow security and instant real-time collaboration.
+                </p>
+            </div>
+
+            <!-- Mission & Vision Cards (Pure SVG Icons, Level 2 Glass) -->
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 32px; margin-bottom: 64px;">
+                <div class="glass-card" style="padding: 38px; border-radius: var(--radius-xl);">
+                    <div class="stat-icon-wrap" style="margin-bottom: 18px;">
+                        <svg class="svg-icon svg-icon-lg" viewBox="0 0 24 24"><path d="M4.5 16.5c-1.5 1.26-2 5-2 5s3.74-.5 5-2c.71-.84.7-2.13-.09-2.91a2.18 2.18 0 0 0-2.91-.09z"></path><path d="M12 15l-3-3a22 22 0 0 1 2-3.95A12.88 12.88 0 0 1 22 2c0 2.72-.78 7.5-6 11a22.35 22.35 0 0 1-4 2z"></path><path d="M9 12H4s.55-3.03 2-4c1.62-1.08 5 0 5 0"></path><path d="M12 15v5s3.03-.55 4-2c1.08-1.62 0-5 0-5"></path></svg>
+                    </div>
+                    <h2 style="font-size: 1.5rem; font-weight: 800; color: var(--text-dark); margin-bottom: 12px;">Our Mission</h2>
+                    <p style="color: var(--text-muted); line-height: 1.6; font-size: 0.95rem;">
+                        To provide freelancers with a transparent, high-value ecosystem where talent is fairly rewarded and businesses can hire verified domain experts with zero friction.
+                    </p>
+                </div>
+
+                <div class="glass-card" style="padding: 38px; border-radius: var(--radius-xl);">
+                    <div class="stat-icon-wrap" style="margin-bottom: 18px;">
+                        <svg class="svg-icon svg-icon-lg" viewBox="0 0 24 24"><polygon points="6 2 18 2 22 8 12 22 2 8 6 2"></polygon><line x1="2" y1="8" x2="22" y2="8"></line><polyline points="10 2 12 8 14 2"></polyline></svg>
+                    </div>
+                    <h2 style="font-size: 1.5rem; font-weight: 800; color: var(--text-dark); margin-bottom: 12px;">Our Vision</h2>
+                    <p style="color: var(--text-muted); line-height: 1.6; font-size: 0.95rem;">
+                        To become Africa's premier liquid glass freelance marketplace — empowering millions of creators, developers, designers, and strategists to build borderless global careers.
+                    </p>
+                </div>
+            </div>
+
+            <!-- Leadership Team -->
+            <div style="margin-bottom: 64px;">
+                <div style="text-align: center; margin-bottom: 40px;">
+                    <span class="badge" style="margin-bottom: 8px;">The Team</span>
+                    <h2 style="font-size: 2.2rem; font-weight: 800; color: var(--text-dark);">Built by Industry Leaders</h2>
+                </div>
+
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 28px;">
+                    <div class="glass-card" style="padding: 28px; text-align: center;">
+                        <div style="width: 80px; height: 80px; border-radius: 50%; background: linear-gradient(135deg, var(--primary), var(--accent-blue)); color: #fff; display: flex; align-items: center; justify-content: center; font-size: 30px; font-weight: 800; margin: 0 auto 16px; box-shadow: 0 8px 20px rgba(2,132,199,0.3);">
+                            AO
+                        </div>
+                        <h3 style="font-size: 1.2rem; font-weight: 700; color: var(--text-dark);">Ataba O.</h3>
+                        <p style="font-size: 0.875rem; color: var(--primary); font-weight: 600;">Founder & Lead Architect</p>
+                        <p style="font-size: 0.85rem; color: var(--text-muted); margin-top: 10px; line-height: 1.5;">Passionate about building scalable digital marketplaces and intuitive liquid glass UIs.</p>
+                    </div>
+
+                    <div class="glass-card" style="padding: 28px; text-align: center;">
+                        <div style="width: 80px; height: 80px; border-radius: 50%; background: linear-gradient(135deg, var(--accent-emerald), #059669); color: #fff; display: flex; align-items: center; justify-content: center; font-size: 30px; font-weight: 800; margin: 0 auto 16px; box-shadow: 0 8px 20px rgba(16,185,129,0.3);">
+                            AB
+                        </div>
+                        <h3 style="font-size: 1.2rem; font-weight: 700; color: var(--text-dark);">Amina Bello</h3>
+                        <p style="font-size: 0.875rem; color: var(--accent-emerald); font-weight: 600;">Head of Product Design</p>
+                        <p style="font-size: 0.85rem; color: var(--text-muted); margin-top: 10px; line-height: 1.5;">Pioneering modern human-centered UX and glass design languages for software applications.</p>
+                    </div>
+
+                    <div class="glass-card" style="padding: 28px; text-align: center;">
+                        <div style="width: 80px; height: 80px; border-radius: 50%; background: linear-gradient(135deg, var(--accent-purple), #7c3aed); color: #fff; display: flex; align-items: center; justify-content: center; font-size: 30px; font-weight: 800; margin: 0 auto 16px; box-shadow: 0 8px 20px rgba(139,92,246,0.3);">
+                            SM
+                        </div>
+                        <h3 style="font-size: 1.2rem; font-weight: 700; color: var(--text-dark);">Sarah Miller</h3>
+                        <p style="font-size: 0.875rem; color: var(--accent-purple); font-weight: 600;">Client Operations Lead</p>
+                        <p style="font-size: 0.85rem; color: var(--text-muted); margin-top: 10px; line-height: 1.5;">Focused on talent curation, enterprise hiring satisfaction, and escrow reliability.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-bottom">
+                <p>&copy; <span id="currentYear">2026</span> SkillLink Marketplace. All rights reserved.</p>
+            </div>
+        </div>
+    </footer>
+
+    <script src="js/data.js"></script>
+    <script src="js/auth.js"></script>
+    <script src="js/main.js"></script>
+</body>
+</html>
