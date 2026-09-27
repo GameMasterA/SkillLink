@@ -259,6 +259,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const loginForm = document.getElementById("loginForm");
     if (loginForm) {
         loginForm.addEventListener("submit", handleLoginSubmit);
+        handleAuthReturnFromEmail();
     }
 
     const profileForm = document.getElementById("profileEditForm");
@@ -279,6 +280,38 @@ document.addEventListener("DOMContentLoaded", () => {
         hydrateFreelancerSettingsForm();
     }
 });
+
+async function handleAuthReturnFromEmail() {
+    const params = new URLSearchParams(window.location.search);
+    const verified = params.get("verified") === "1";
+    const notice = params.get("notice");
+
+    if (verified) {
+        try {
+            await window.supabaseBootstrapPromise;
+            await window.supabaseReady;
+            await window.supabaseClient.auth.signOut();
+        } catch (error) {
+            console.warn("Unable to clear the confirmation callback session:", error);
+        }
+
+        localStorage.removeItem(STORAGE_CURRENT_USER);
+        setAlert("loginAlert", "Email confirmed. Your account is ready. Please sign in.", false);
+        window.history.replaceState({}, document.title, window.location.pathname);
+        return;
+    }
+
+    if (notice === "check-email") {
+        setAlert("loginAlert", "Account created. Check your inbox and confirm your email, then sign in here.", false);
+        window.history.replaceState({}, document.title, window.location.pathname);
+    } else if (notice === "profile-retry") {
+        setAlert("loginAlert", "Your account was created and a confirmation email was sent. Confirm your email, then sign in to finish setting up your profile.", false);
+        window.history.replaceState({}, document.title, window.location.pathname);
+    } else if (notice === "account-ready") {
+        setAlert("loginAlert", "Account created. Please sign in.", false);
+        window.history.replaceState({}, document.title, window.location.pathname);
+    }
+}
 
 function hydrateProfileForm() {
     const user = getCurrentUser();
@@ -417,7 +450,8 @@ async function handleRegisterSubmit(e) {
                         first_name: firstName,
                         last_name: lastName,
                         name: `${firstName} ${lastName}`
-                    }
+                    },
+                    emailRedirectTo: `${window.location.origin}/login.html?verified=1`
                 }
             });
 
@@ -472,26 +506,13 @@ async function handleRegisterSubmit(e) {
                 return;
             }
 
-            const allUsers = getUsers();
-            const existingEntryIndex = allUsers.findIndex(u => String(u.email || '').toLowerCase() === String(email).toLowerCase());
-            if (existingEntryIndex >= 0) {
-                allUsers[existingEntryIndex] = { ...allUsers[existingEntryIndex], ...localUserMirror };
-            } else {
-                allUsers.push(localUserMirror);
-            }
-            saveUsers(allUsers);
-
             if (!data.session) {
-                setAlert("regAlert", "Account created. Check your email and confirm your address before signing in.", false);
+                window.location.assign(profileError ? "login.html?notice=profile-retry" : "login.html?notice=check-email");
                 return;
             }
 
-            setCurrentUser(localUserMirror);
-            setAlert("regAlert", "Account created successfully! Redirecting to your dashboard...", false);
-
-            setTimeout(() => {
-                redirectBasedOnRole(role);
-            }, 600);
+            await window.supabaseClient.auth.signOut();
+            window.location.assign("login.html?notice=account-ready");
             return;
         } catch (err) {
             setAlert("regAlert", err.message || "Unable to create your account.");
