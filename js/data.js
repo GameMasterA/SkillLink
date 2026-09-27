@@ -251,30 +251,22 @@ const SEED_MESSAGES = [
 ];
 
 function initMarketplaceData() {
-    if (!localStorage.getItem(STORAGE_KEYS.JOBS)) {
-        localStorage.setItem(STORAGE_KEYS.JOBS, JSON.stringify(SEED_JOBS));
-    }
-    if (!localStorage.getItem(STORAGE_KEYS.FREELANCERS)) {
-        localStorage.setItem(STORAGE_KEYS.FREELANCERS, JSON.stringify(SEED_FREELANCERS));
-    }
-    if (!localStorage.getItem(STORAGE_KEYS.CATEGORIES)) {
-        localStorage.setItem(STORAGE_KEYS.CATEGORIES, JSON.stringify(SEED_CATEGORIES));
-    }
-    if (!localStorage.getItem(STORAGE_KEYS.PROPOSALS)) {
-        localStorage.setItem(STORAGE_KEYS.PROPOSALS, JSON.stringify(SEED_PROPOSALS));
-    }
-    if (!localStorage.getItem(STORAGE_KEYS.PROJECTS)) {
-        localStorage.setItem(STORAGE_KEYS.PROJECTS, JSON.stringify(SEED_PROJECTS));
-    }
-    if (!localStorage.getItem(STORAGE_KEYS.TRANSACTIONS)) {
-        localStorage.setItem(STORAGE_KEYS.TRANSACTIONS, JSON.stringify(SEED_TRANSACTIONS));
-    }
-    if (!localStorage.getItem(STORAGE_KEYS.MESSAGES)) {
-        localStorage.setItem(STORAGE_KEYS.MESSAGES, JSON.stringify(SEED_MESSAGES));
-    }
-    if (!localStorage.getItem(STORAGE_KEYS.SAVED_JOBS)) {
-        localStorage.setItem(STORAGE_KEYS.SAVED_JOBS, JSON.stringify([]));
-    }
+    const blankStore = {
+        [STORAGE_KEYS.JOBS]: [],
+        [STORAGE_KEYS.FREELANCERS]: [],
+        [STORAGE_KEYS.CATEGORIES]: [],
+        [STORAGE_KEYS.PROPOSALS]: [],
+        [STORAGE_KEYS.PROJECTS]: [],
+        [STORAGE_KEYS.TRANSACTIONS]: [],
+        [STORAGE_KEYS.MESSAGES]: [],
+        [STORAGE_KEYS.SAVED_JOBS]: []
+    };
+
+    Object.entries(blankStore).forEach(([key, value]) => {
+        if (!localStorage.getItem(key)) {
+            localStorage.setItem(key, JSON.stringify(value));
+        }
+    });
 }
 
 // Data Getters & Setters

@@ -6,60 +6,22 @@
 const STORAGE_USERS = "skillLinkUsers";
 const STORAGE_CURRENT_USER = "skillLinkUser";
 
-const DEFAULT_USERS = [
-    {
-        id: "usr-demo-adm",
-        role: "admin",
-        firstName: "System",
-        lastName: "Admin",
-        name: "System Admin",
-        email: "admin@skilllink.com",
-        password: "admin123",
-        createdAt: "2026-01-01T00:00:00.000Z"
-    },
-    {
-        id: "usr-demo-fl",
-        role: "freelancer",
-        firstName: "John",
-        lastName: "Doe",
-        name: "John Doe",
-        email: "freelancer@skilllink.com",
-        password: "password123",
-        skill: "Frontend Developer",
-        bio: "Full-stack web developer specializing in clean vanilla JS, modern HTML5/CSS3, and sky-blue glassmorphism UI design.",
-        title: "Frontend Developer & UI Specialist",
-        startingPrice: 50000,
-        completedJobs: 28,
-        rating: 4.9,
-        createdAt: "2026-01-15T08:00:00.000Z"
-    },
-    {
-        id: "usr-demo-cl",
-        role: "client",
-        firstName: "Sarah",
-        lastName: "Miller",
-        name: "Sarah Miller",
-        email: "client@skilllink.com",
-        password: "password123",
-        company: "Apex Tech Ventures",
-        bio: "Tech entrepreneur hiring top-tier remote talent for web, mobile, and brand design projects.",
-        jobsPosted: 12,
-        rating: 4.9,
-        createdAt: "2026-01-10T10:30:00.000Z"
-    }
-];
+const DEFAULT_USERS = [];
 
 function initUsers() {
     let stored = localStorage.getItem(STORAGE_USERS);
     if (!stored) {
         localStorage.setItem(STORAGE_USERS, JSON.stringify(DEFAULT_USERS));
-    } else {
-        // Ensure admin always exists in storage even if storage was initialized before
-        let users = JSON.parse(stored);
-        if (!users.some(u => u.email === "admin@skilllink.com")) {
-            users.push(DEFAULT_USERS[0]);
-            localStorage.setItem(STORAGE_USERS, JSON.stringify(users));
+        return;
+    }
+
+    try {
+        const users = JSON.parse(stored);
+        if (!Array.isArray(users)) {
+            localStorage.setItem(STORAGE_USERS, JSON.stringify(DEFAULT_USERS));
         }
+    } catch (error) {
+        localStorage.setItem(STORAGE_USERS, JSON.stringify(DEFAULT_USERS));
     }
 }
 
@@ -408,12 +370,6 @@ async function handleRegisterSubmit(e) {
         return;
     }
 
-    const users = getUsers();
-    if (users.some(u => u.email === email)) {
-        setAlert("regAlert", "An account with this email address already exists.");
-        return;
-    }
-
     if (window.isSupabaseConfigured && window.isSupabaseConfigured()) {
         try {
             const { data, error } = await window.supabaseClient.auth.signUp({
@@ -434,23 +390,39 @@ async function handleRegisterSubmit(e) {
                 return;
             }
 
+            const authUser = data?.user;
+            const localUserMirror = {
+                id: authUser?.id || `usr-${Date.now()}`,
+                email,
+                role,
+                firstName,
+                lastName,
+                name: `${firstName} ${lastName}`,
+                title: role === "freelancer" ? (document.getElementById("primarySkill")?.value || "Web Development") : "Client",
+                primarySkill: role === "freelancer" ? (document.getElementById("primarySkill")?.value || "Web Development") : null,
+                company: role === "client" ? (document.getElementById("companyName")?.value.trim() || "Independent Client") : null,
+                startingPrice: role === "freelancer" ? 45000 : 0,
+                availability: "Available Now",
+                createdAt: new Date().toISOString()
+            };
+
             const profilePayload = {
-                id: data?.user?.id || `usr-${Date.now()}`,
+                id: localUserMirror.id,
                 email,
                 role,
                 first_name: firstName,
                 last_name: lastName,
                 name: `${firstName} ${lastName}`,
-                title: role === "freelancer" ? (document.getElementById("primarySkill")?.value || "Web Development") : "Client",
-                primary_skill: role === "freelancer" ? (document.getElementById("primarySkill")?.value || "Web Development") : null,
-                company: role === "client" ? (document.getElementById("companyName")?.value.trim() || "Independent Client") : null,
-                starting_price: role === "freelancer" ? 45000 : 0,
+                title: localUserMirror.title,
+                primary_skill: localUserMirror.primarySkill,
+                company: localUserMirror.company,
+                starting_price: localUserMirror.startingPrice,
                 completed_jobs: role === "freelancer" ? 0 : 0,
                 jobs_posted: role === "client" ? 0 : 0,
                 rating: 5.0,
                 reviews_count: 0,
-                availability: "Available Now",
-                created_at: new Date().toISOString()
+                availability: localUserMirror.availability,
+                created_at: localUserMirror.createdAt
             };
 
             const { error: profileError } = await window.supabaseClient.from("profiles").insert([profilePayload]);
@@ -459,7 +431,16 @@ async function handleRegisterSubmit(e) {
                 return;
             }
 
-            setCurrentUser(profilePayload);
+            const allUsers = getUsers();
+            const existingEntryIndex = allUsers.findIndex(u => String(u.email || '').toLowerCase() === String(email).toLowerCase());
+            if (existingEntryIndex >= 0) {
+                allUsers[existingEntryIndex] = { ...allUsers[existingEntryIndex], ...localUserMirror };
+            } else {
+                allUsers.push(localUserMirror);
+            }
+            saveUsers(allUsers);
+
+            setCurrentUser(localUserMirror);
             setAlert("regAlert", "Account created successfully! Redirecting to your dashboard...", false);
 
             setTimeout(() => {
@@ -470,6 +451,12 @@ async function handleRegisterSubmit(e) {
             setAlert("regAlert", err.message || "Unable to create your account.");
             return;
         }
+    }
+
+    const users = getUsers();
+    if (users.some(u => String(u.email || '').toLowerCase() === String(email).toLowerCase())) {
+        setAlert("regAlert", "An account with this email address already exists.");
+        return;
     }
 
     const newUser = {
@@ -598,6 +585,29 @@ async function handleLoginSubmit(e) {
                     name: data?.user?.email?.split("@")[0] || "User"
                 };
             }
+
+            const allUsers = getUsers();
+            const existingEntryIndex = allUsers.findIndex(u => String(u.email || '').toLowerCase() === String(email).toLowerCase());
+            const localMirror = {
+                ...profile,
+                id: profile.id || data?.user?.id || `usr-${Date.now()}`,
+                email,
+                role: profile.role || fallbackRole,
+                firstName: profile.first_name || data?.user?.user_metadata?.first_name || profile.name?.split(' ')[0] || 'User',
+                lastName: profile.last_name || data?.user?.user_metadata?.last_name || '',
+                name: profile.name || `${(data?.user?.user_metadata?.first_name || 'User')}`.trim() || 'User',
+                title: profile.title || 'Freelancer',
+                company: profile.company || null,
+                startingPrice: Number(profile.starting_price || 0),
+                availability: profile.availability || 'Available Now'
+            };
+
+            if (existingEntryIndex >= 0) {
+                allUsers[existingEntryIndex] = { ...allUsers[existingEntryIndex], ...localMirror };
+            } else {
+                allUsers.push(localMirror);
+            }
+            saveUsers(allUsers);
 
             setCurrentUser(profile);
             setAlert("loginAlert", "Authenticated! Redirecting to dashboard...", false);
