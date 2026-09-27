@@ -5,8 +5,19 @@
 
 const STORAGE_USERS = "skillLinkUsers";
 const STORAGE_CURRENT_USER = "skillLinkUser";
+const LEGACY_DEMO_EMAILS = new Set([
+    "admin@skilllink.com",
+    "freelancer@skilllink.com",
+    "client@skilllink.com"
+]);
 
 const DEFAULT_USERS = [];
+
+function sanitizeLocalUsers(users) {
+    return users
+        .filter(user => user && !LEGACY_DEMO_EMAILS.has(String(user.email || "").toLowerCase()))
+        .map(({ password, ...user }) => user);
+}
 
 function initUsers() {
     let stored = localStorage.getItem(STORAGE_USERS);
@@ -19,6 +30,12 @@ function initUsers() {
         const users = JSON.parse(stored);
         if (!Array.isArray(users)) {
             localStorage.setItem(STORAGE_USERS, JSON.stringify(DEFAULT_USERS));
+            return;
+        }
+
+        const sanitizedUsers = sanitizeLocalUsers(users);
+        if (JSON.stringify(sanitizedUsers) !== JSON.stringify(users)) {
+            localStorage.setItem(STORAGE_USERS, JSON.stringify(sanitizedUsers));
         }
     } catch (error) {
         localStorage.setItem(STORAGE_USERS, JSON.stringify(DEFAULT_USERS));
@@ -27,19 +44,25 @@ function initUsers() {
 
 function getUsers() {
     initUsers();
-    return JSON.parse(localStorage.getItem(STORAGE_USERS)) || [];
+    return sanitizeLocalUsers(JSON.parse(localStorage.getItem(STORAGE_USERS)) || []);
 }
 
 function saveUsers(users) {
-    localStorage.setItem(STORAGE_USERS, JSON.stringify(users));
+    localStorage.setItem(STORAGE_USERS, JSON.stringify(sanitizeLocalUsers(users)));
 }
 
 function getCurrentUser() {
-    return JSON.parse(localStorage.getItem(STORAGE_CURRENT_USER));
+    const currentUser = JSON.parse(localStorage.getItem(STORAGE_CURRENT_USER) || "null");
+    if (currentUser && (currentUser.password || LEGACY_DEMO_EMAILS.has(String(currentUser.email || "").toLowerCase()) || String(currentUser.id || "").startsWith("usr-"))) {
+        localStorage.removeItem(STORAGE_CURRENT_USER);
+        return null;
+    }
+    return currentUser;
 }
 
 function setCurrentUser(user) {
-    localStorage.setItem(STORAGE_CURRENT_USER, JSON.stringify(user));
+    const { password, ...safeUser } = user;
+    localStorage.setItem(STORAGE_CURRENT_USER, JSON.stringify(safeUser));
 }
 
 function updateUserProfile(updatedData) {
