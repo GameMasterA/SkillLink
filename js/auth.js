@@ -441,6 +441,17 @@ async function handleRegisterSubmit(e) {
 
     if (window.isSupabaseConfigured && window.isSupabaseConfigured()) {
         try {
+            const { data: matchingProfiles, error: profileLookupError } = await window.supabaseClient
+                .from("profiles")
+                .select("id,email", { email });
+
+            if (!profileLookupError && Array.isArray(matchingProfiles) && matchingProfiles.some(profile =>
+                String(profile.email || "").trim().toLowerCase() === email
+            )) {
+                setAlert("regAlert", "An account with this email already exists. Please sign in or use a different email address.");
+                return;
+            }
+
             const { data, error } = await window.supabaseClient.auth.signUp({
                 email,
                 password,
@@ -456,12 +467,20 @@ async function handleRegisterSubmit(e) {
             });
 
             if (error) {
-                setAlert("regAlert", error.message || "Unable to create account right now.");
+                const duplicateEmail = ["email_exists", "user_already_exists"].includes(error.code);
+                setAlert("regAlert", duplicateEmail
+                    ? "An account with this email already exists. Please sign in or use a different email address."
+                    : (error.message || "Unable to create account right now."));
                 return;
             }
 
             if (!data?.user) {
                 setAlert("regAlert", "Supabase did not return a new account. Please try again.");
+                return;
+            }
+
+            if (Array.isArray(data.user.identities) && data.user.identities.length === 0) {
+                setAlert("regAlert", "An account with this email already exists. Please sign in or use a different email address.");
                 return;
             }
 
