@@ -514,6 +514,48 @@ async function handleRegisterSubmit(e) {
     }, 600);
 }
 
+async function createMissingProfileForAuthUser(userEmail, userId, fallbackRole = "freelancer") {
+    if (!(window.isSupabaseConfigured && window.isSupabaseConfigured()) || !window.supabaseClient) {
+        return null;
+    }
+
+    try {
+        const profileResult = await window.supabaseClient.from("profiles").select("*");
+        const rows = Array.isArray(profileResult.data) ? profileResult.data : [];
+        const existingProfile = rows.find(profile => String(profile.email || "").toLowerCase() === String(userEmail || "").toLowerCase());
+
+        if (existingProfile) {
+            return existingProfile;
+        }
+
+        const generatedProfile = {
+            id: userId || `usr-${Date.now()}`,
+            email: userEmail,
+            role: fallbackRole,
+            first_name: (userEmail || "User").split("@")[0].split(".")[0] || "User",
+            last_name: "",
+            name: (userEmail || "User").split("@")[0] || "User",
+            title: fallbackRole === "client" ? "Client" : "Freelancer",
+            bio: "",
+            company: fallbackRole === "client" ? "Independent Client" : null,
+            skills: [],
+            primary_skill: fallbackRole === "client" ? null : "Web Development",
+            starting_price: fallbackRole === "client" ? 0 : 45000,
+            availability: "Available Now",
+            created_at: new Date().toISOString()
+        };
+
+        const { error } = await window.supabaseClient.from("profiles").insert([generatedProfile]);
+        if (error) {
+            return generatedProfile;
+        }
+
+        return generatedProfile;
+    } catch (error) {
+        return null;
+    }
+}
+
 async function handleLoginSubmit(e) {
     e.preventDefault();
     clearAlert("loginAlert");
@@ -535,16 +577,33 @@ async function handleLoginSubmit(e) {
                 return;
             }
 
-            const profileResult = await window.supabaseClient.from("profiles").select("*", { email: email });
-            const profile = profileResult.data && profileResult.data[0]
-                ? profileResult.data[0]
-                : { id: data.user.id, email, role: "freelancer", name: data.user.email.split("@")[0] };
+            const fallbackRole = (data?.user?.user_metadata?.role || "freelancer");
+            let profile = null;
+
+            const profileResult = await window.supabaseClient.from("profiles").select("*");
+            const rows = Array.isArray(profileResult.data) ? profileResult.data : [];
+            const matchedProfile = rows.find(item => String(item.email || "").toLowerCase() === email);
+
+            if (matchedProfile) {
+                profile = matchedProfile;
+            } else {
+                profile = await createMissingProfileForAuthUser(email, data?.user?.id || `usr-${Date.now()}`, fallbackRole);
+            }
+
+            if (!profile) {
+                profile = {
+                    id: data?.user?.id || `usr-${Date.now()}`,
+                    email,
+                    role: fallbackRole,
+                    name: data?.user?.email?.split("@")[0] || "User"
+                };
+            }
 
             setCurrentUser(profile);
             setAlert("loginAlert", "Authenticated! Redirecting to dashboard...", false);
 
             setTimeout(() => {
-                redirectBasedOnRole(profile.role || "freelancer");
+                redirectBasedOnRole(profile.role || fallbackRole || "freelancer");
             }, 600);
             return;
         } catch (err) {
