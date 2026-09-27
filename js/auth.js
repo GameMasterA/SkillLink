@@ -502,8 +502,7 @@ async function handleRegisterSubmit(e) {
 
             const { error: profileError } = await window.supabaseClient.from("profiles").insert([profilePayload]);
             if (profileError) {
-                setAlert("regAlert", "Account created, but profile sync failed. Please sign in and complete your profile.");
-                return;
+                console.warn("[SkillLink] Profile creation will be retried after sign-in:", profileError);
             }
 
             if (!data.session) {
