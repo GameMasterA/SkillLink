@@ -20,11 +20,31 @@ SkillLink is a frontend marketplace prototype for freelancers and clients. It us
 
 ## Render hosting
 
-For static hosting on Render:
-- Create a new Static Site
+For static hosting on Render, keep this project as a pure frontend app:
+- Create a new Static Site in Render
 - Connect your GitHub repo
-- Set the root directory to the project folder
-- Publish the site
+- Set the Root Directory to the project folder that contains `index.html` (for this repo, that is `SkillLink` if the repo includes the app folder)
+- Leave the build command empty
+- Set the Publish Directory to `.`
+- Deploy
+
+Recommended Render settings:
+- Framework: Static Site
+- Build command: blank
+- Publish directory: `.`
+- No Node.js runtime
+- No Python or Django runtime
+
+A sample `render.yaml` for this project is included in the app root:
+
+```yaml
+services:
+  - type: web
+    name: skilllink
+    runtime: static
+    buildCommand: ""
+    staticPublishPath: ./
+```
 
 ## Notes
 - This app still uses localStorage as a fallback when Supabase is not configured.

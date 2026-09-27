@@ -146,6 +146,27 @@ const supabaseClient = {
                 } catch (error) {
                     return { data: null, error };
                 }
+            },
+            async delete(filters = {}) {
+                if (!isSupabaseConfigured()) {
+                    return { data: null, error: new Error("Supabase not configured") };
+                }
+
+                try {
+                    const params = new URLSearchParams();
+                    Object.entries(filters).forEach(([column, value]) => {
+                        params.append(column, `eq.${value}`);
+                    });
+
+                    const res = await fetch(`${baseUrl}?${params.toString()}`, {
+                        method: "DELETE",
+                        headers
+                    });
+                    if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
+                    return { data: await res.json(), error: null };
+                } catch (error) {
+                    return { data: null, error };
+                }
             }
         };
     }

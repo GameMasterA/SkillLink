@@ -96,6 +96,57 @@ function updateUserProfile(updatedData) {
     return currentUser;
 }
 
+async function syncUserProfileToSupabase(profileData) {
+    if (!(window.isSupabaseConfigured && window.isSupabaseConfigured()) || !window.supabaseClient) {
+        return { success: true, error: null };
+    }
+
+    const currentUser = getCurrentUser();
+    if (!currentUser || !currentUser.id) {
+        return { success: true, error: null };
+    }
+
+    const payload = {
+        email: profileData.email || currentUser.email,
+        role: profileData.role || currentUser.role,
+        first_name: profileData.firstName || profileData.first_name || currentUser.firstName || currentUser.first_name || "",
+        last_name: profileData.lastName || profileData.last_name || currentUser.lastName || currentUser.last_name || "",
+        name: profileData.name || `${(profileData.firstName || currentUser.firstName || "").trim()} ${(profileData.lastName || currentUser.lastName || "").trim()}`.trim() || currentUser.name || "User",
+        title: profileData.title || currentUser.title || currentUser.skill || "",
+        bio: profileData.bio || currentUser.bio || "",
+        company: profileData.company || currentUser.company || null,
+        skills: Array.isArray(profileData.skills) ? profileData.skills : (Array.isArray(currentUser.skills) ? currentUser.skills : []),
+        primary_skill: profileData.primarySkill || profileData.skill || currentUser.primarySkill || currentUser.skill || null,
+        starting_price: Number(profileData.startingPrice ?? currentUser.startingPrice ?? 0),
+        availability: profileData.availability || currentUser.availability || "Available Now"
+    };
+
+    try {
+        const { error } = await window.supabaseClient.from("profiles").update(payload, { id: currentUser.id });
+        return { success: !error, error };
+    } catch (error) {
+        return { success: false, error };
+    }
+}
+
+function deleteUserAccount(userId) {
+    if (!userId) return false;
+
+    const users = getUsers().filter(u => String(u.id) !== String(userId));
+    saveUsers(users);
+
+    const currentUser = getCurrentUser();
+    if (currentUser && String(currentUser.id) === String(userId)) {
+        localStorage.removeItem(STORAGE_CURRENT_USER);
+    }
+
+    if (window.isSupabaseConfigured && window.isSupabaseConfigured() && window.supabaseClient) {
+        window.supabaseClient.from("profiles").delete({ id: userId }).catch(() => {});
+    }
+
+    return true;
+}
+
 function clearAlert(elementId) {
     const el = document.getElementById(elementId);
     if (el) {
@@ -224,7 +275,123 @@ document.addEventListener("DOMContentLoaded", () => {
     if (loginForm) {
         loginForm.addEventListener("submit", handleLoginSubmit);
     }
+
+    const profileForm = document.getElementById("profileEditForm");
+    if (profileForm) {
+        profileForm.addEventListener("submit", handleProfileSaveSubmit);
+        hydrateProfileForm();
+    }
+
+    const clientSettingsForm = document.getElementById("clientSettingsForm");
+    if (clientSettingsForm) {
+        clientSettingsForm.addEventListener("submit", handleClientSettingsSubmit);
+        hydrateClientSettingsForm();
+    }
+
+    const freelancerSettingsForm = document.getElementById("freelancerSettingsForm");
+    if (freelancerSettingsForm) {
+        freelancerSettingsForm.addEventListener("submit", handleFreelancerSettingsSubmit);
+        hydrateFreelancerSettingsForm();
+    }
 });
+
+function hydrateProfileForm() {
+    const user = getCurrentUser();
+    if (!user) return;
+
+    const titleField = document.getElementById("profTitle");
+    if (titleField) titleField.value = user.title || user.skill || "";
+
+    const bioField = document.getElementById("profBio");
+    if (bioField) bioField.value = user.bio || "";
+
+    const rateField = document.getElementById("profRate");
+    if (rateField) rateField.value = user.startingPrice || user.starting_price || 0;
+
+    const availabilityField = document.getElementById("profAvailability");
+    if (availabilityField) availabilityField.value = user.availability || "Available Now";
+
+    const skillsField = document.getElementById("profSkills");
+    if (skillsField) skillsField.value = Array.isArray(user.skills) ? user.skills.join(", ") : (user.skill ? user.skill : "");
+}
+
+function hydrateClientSettingsForm() {
+    const user = getCurrentUser();
+    if (!user) return;
+
+    const companyField = document.getElementById("clientCompanyName");
+    if (companyField) companyField.value = user.company || "";
+}
+
+function hydrateFreelancerSettingsForm() {
+    const user = getCurrentUser();
+    if (!user) return;
+
+    const emailField = document.getElementById("freelancerEmail");
+    if (emailField) emailField.value = user.email || "";
+}
+
+async function handleProfileSaveSubmit(e) {
+    e.preventDefault();
+
+    const user = getCurrentUser();
+    if (!user) return;
+
+    const updatedUser = {
+        ...user,
+        title: document.getElementById("profTitle")?.value.trim() || user.title || user.skill || "",
+        bio: document.getElementById("profBio")?.value.trim() || user.bio || "",
+        availability: document.getElementById("profAvailability")?.value || user.availability || "Available Now",
+        startingPrice: Number(document.getElementById("profRate")?.value || user.startingPrice || user.starting_price || 0),
+        skills: document.getElementById("profSkills")?.value ? document.getElementById("profSkills").value.split(",").map(item => item.trim()).filter(Boolean) : (Array.isArray(user.skills) ? user.skills : [])
+    };
+
+    updateUserProfile(updatedUser);
+    const syncResult = await syncUserProfileToSupabase(updatedUser);
+
+    if (typeof showToast === "function") {
+        showToast(syncResult.success ? "Profile updated successfully." : "Saved locally; cloud sync failed.", syncResult.success ? "success" : "info");
+    }
+}
+
+async function handleClientSettingsSubmit(e) {
+    e.preventDefault();
+
+    const user = getCurrentUser();
+    if (!user) return;
+
+    const updatedUser = {
+        ...user,
+        company: document.getElementById("clientCompanyName")?.value.trim() || user.company || ""
+    };
+
+    updateUserProfile(updatedUser);
+    const syncResult = await syncUserProfileToSupabase(updatedUser);
+
+    if (typeof showToast === "function") {
+        showToast(syncResult.success ? "Company settings updated successfully." : "Saved locally; cloud sync failed.", syncResult.success ? "success" : "info");
+    }
+}
+
+async function handleFreelancerSettingsSubmit(e) {
+    e.preventDefault();
+
+    const user = getCurrentUser();
+    if (!user) return;
+
+    const updatedUser = {
+        ...user,
+        email: document.getElementById("freelancerEmail")?.value.trim().toLowerCase() || user.email,
+        availability: document.getElementById("freelancerAvailability")?.value || user.availability || "Available Now"
+    };
+
+    updateUserProfile(updatedUser);
+    const syncResult = await syncUserProfileToSupabase(updatedUser);
+
+    if (typeof showToast === "function") {
+        showToast(syncResult.success ? "Preferences saved successfully." : "Saved locally; cloud sync failed.", syncResult.success ? "success" : "info");
+    }
+}
 
 async function handleRegisterSubmit(e) {
     e.preventDefault();

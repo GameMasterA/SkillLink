@@ -1,0 +1,6 @@
+services:
+  - type: web
+    name: skilllink
+    runtime: static
+    buildCommand: ""
+    staticPublishPath: ./

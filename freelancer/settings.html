@@ -99,20 +99,24 @@
                 <div class="glass-card" style="padding: 36px; border-radius: var(--radius-xl); max-width: 740px; margin: 0 auto;">
                     <h2 style="font-size: 1.45rem; font-weight: 800; color: var(--text-dark); margin-bottom: 24px;">Security & Preferences</h2>
 
-                    <form onsubmit="event.preventDefault(); if(typeof showToast==='function') showToast('Settings saved successfully!', 'success');">
+                    <form id="freelancerSettingsForm" onsubmit="event.preventDefault();">
                         <div style="margin-bottom: 16px;">
                             <label>Email Address</label>
-                            <input type="email" value="freelancer@skilllink.com" disabled style="width: 100%; opacity: 0.8;">
+                            <input id="freelancerEmail" type="email" value="freelancer@skilllink.com" style="width: 100%;">
                         </div>
 
                         <div style="margin-bottom: 16px;">
-                            <label>Current Password</label>
-                            <input type="password" placeholder="••••••••" style="width: 100%;">
+                            <label>Availability</label>
+                            <select id="freelancerAvailability" style="width: 100%;">
+                                <option value="Available Now">Available Now</option>
+                                <option value="Available Next Week">Available Next Week</option>
+                                <option value="Busy / Contracted">Busy / Contracted</option>
+                            </select>
                         </div>
 
                         <div style="margin-bottom: 24px;">
-                            <label>New Password</label>
-                            <input type="password" placeholder="Enter new password" style="width: 100%;">
+                            <label>Current Title / Specialty</label>
+                            <input id="freelancerTitle" type="text" placeholder="Frontend Developer & UI Specialist" style="width: 100%;">
                         </div>
 
                         <h3 style="font-size: 1.1rem; font-weight: 700; color: var(--text-dark); margin-bottom: 14px;">Notification Preferences</h3>

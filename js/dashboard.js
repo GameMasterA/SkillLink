@@ -282,11 +282,11 @@ function renderClientJobsTable() {
 
     const jobs = typeof getStoredJobs === "function" ? getStoredJobs() : [];
     const myJobs = isNew 
-        ? jobs.filter(j => j.clientId === userId)
-        : jobs.filter(j => j.clientId === "usr-demo-cl" || j.clientId === userId);
+        ? jobs.filter(j => String(j.clientId || j.client_id) === String(userId))
+        : jobs.filter(j => String(j.clientId || j.client_id) === "usr-demo-cl" || String(j.clientId || j.client_id) === String(userId));
 
     if (myJobs.length === 0) {
-        table.innerHTML = `<tr><td colspan="5" style="text-align:center; padding:24px; color:var(--text-muted);">No jobs posted yet. <a href="post-job.html" style="color:var(--primary); font-weight:600; text-decoration:none;">Post your first job offer</a></td></tr>`;
+        table.innerHTML = `<tr><td colspan="6" style="text-align:center; padding:24px; color:var(--text-muted);">No jobs posted yet. <a href="post-job.html" style="color:var(--primary); font-weight:600; text-decoration:none;">Post your first job offer</a></td></tr>`;
         return;
     }
 
@@ -294,9 +294,15 @@ function renderClientJobsTable() {
         <tr>
             <td><strong>${j.title}</strong></td>
             <td>${j.category}</td>
-            <td style="font-weight:700; color:var(--primary);">${typeof formatCurrency === "function" ? formatCurrency(j.budgetMax) : '₦' + j.budgetMax}</td>
-            <td>${j.proposalsCount || 0} applicants</td>
-            <td><span class="status-indicator">${j.status.toUpperCase()}</span></td>
+            <td style="font-weight:700; color:var(--primary);">${typeof formatCurrency === "function" ? formatCurrency(j.budgetMax || j.budget_max || 0) : '₦' + (j.budgetMax || j.budget_max || 0)}</td>
+            <td>${j.proposalsCount || j.proposals_count || 0} applicants</td>
+            <td><span class="status-indicator">${(j.status || "open").toUpperCase()}</span></td>
+            <td>
+                <div style="display:flex; gap:8px; flex-wrap:wrap;">
+                    <button class="btn btn-outline btn-sm" type="button" onclick="window.location.href='post-job.html?id=${encodeURIComponent(j.id)}'">Edit</button>
+                    <button class="btn btn-outline btn-sm" type="button" onclick="deleteClientJob('${j.id}')" style="border-color: rgba(239,68,68,0.5); color: #dc2626;">Delete</button>
+                </div>
+            </td>
         </tr>
     `).join("");
 }
@@ -305,11 +311,27 @@ function setupPostJobForm() {
     const form = document.getElementById("postJobForm");
     if (!form) return;
 
-    form.addEventListener("submit", (e) => {
+    const params = new URLSearchParams(window.location.search);
+    const editJobId = params.get("id");
+
+    if (editJobId && typeof getStoredJobs === "function") {
+        const currentJob = getStoredJobs().find(job => String(job.id) === String(editJobId));
+        if (currentJob) {
+            document.getElementById("jobTitle").value = currentJob.title || "";
+            document.getElementById("jobCategory").value = currentJob.category || "Web Development";
+            document.getElementById("budgetMin").value = currentJob.budgetMin ?? currentJob.budget_min ?? 0;
+            document.getElementById("budgetMax").value = currentJob.budgetMax ?? currentJob.budget_max ?? 0;
+            document.getElementById("jobSkills").value = (currentJob.skills || []).join(", ");
+            document.getElementById("jobDescription").value = currentJob.description || "";
+            const submitButton = form.querySelector('button[type="submit"]');
+            if (submitButton) submitButton.textContent = "Update Job Listing";
+        }
+    }
+
+    form.addEventListener("submit", async (e) => {
         e.preventDefault();
-        
+
         const user = typeof getCurrentUser === "function" ? getCurrentUser() : null;
-        
         const title = document.getElementById("jobTitle")?.value.trim();
         const category = document.getElementById("jobCategory")?.value;
         const budgetMin = Number(document.getElementById("budgetMin")?.value || 0);
@@ -318,14 +340,22 @@ function setupPostJobForm() {
         const skillsRaw = document.getElementById("jobSkills")?.value || "";
         const skills = skillsRaw.split(",").map(s => s.trim()).filter(Boolean);
 
-        const newJob = {
-            id: "job-" + Date.now(),
-            title: title,
+        if (!title || !description || !category || budgetMin <= 0 || budgetMax <= 0) {
+            if (typeof showToast === "function") {
+                showToast("Please complete the form before publishing.", "error");
+            }
+            return;
+        }
+
+        const normalizedUser = user || { id: "usr-demo-cl", name: "Sarah Miller" };
+        const jobPayload = {
+            id: editJobId || `job-${Date.now()}`,
+            title,
             summary: description.substring(0, 100) + "...",
-            description: description,
-            category: category,
-            budgetMin: budgetMin,
-            budgetMax: budgetMax,
+            description,
+            category,
+            budgetMin,
+            budgetMax,
             experience: "Intermediate",
             type: "Fixed Price",
             duration: "1-2 Weeks",
@@ -334,31 +364,58 @@ function setupPostJobForm() {
             proposalsCount: 0,
             skills: skills.length > 0 ? skills : ["Web Development"],
             status: "open",
-            clientId: user ? user.id : "usr-demo-cl",
+            clientId: normalizedUser.id,
             client: {
-                id: user ? user.id : "usr-demo-cl",
-                name: user ? user.name : "Sarah Miller",
+                id: normalizedUser.id,
+                name: normalizedUser.name || "Client",
                 rating: 4.9,
                 jobsPosted: 1
             }
         };
 
-        const jobs = typeof getStoredJobs === "function" ? getStoredJobs() : [];
-        jobs.unshift(newJob);
-        if (typeof saveStoredJobs === "function") {
-            saveStoredJobs(jobs);
+        let result;
+        if (editJobId) {
+            result = await window.updateJobRecord(editJobId, jobPayload);
+        } else {
+            result = await window.createJobRecord(jobPayload);
+        }
+
+        if (result && result.success) {
+            if (typeof showToast === "function") {
+                showToast(editJobId ? "Job updated successfully." : "Job posted successfully! Live in marketplace.", "success");
+            }
+            setTimeout(() => {
+                window.location.href = "my-jobs.html";
+            }, 800);
+            return;
         }
 
         if (typeof showToast === "function") {
-            showToast("Job posted successfully! Live in marketplace.", "success");
+            showToast(result?.error?.message || "Unable to save the job right now.", "error");
         }
-
-        setTimeout(() => {
-            window.location.href = "my-jobs.html";
-        }, 1000);
     });
 }
 
+async function deleteClientJob(jobId) {
+    if (!jobId) return;
+    const confirmed = window.confirm("Delete this listing? This action cannot be undone.");
+    if (!confirmed) return;
+
+    const result = await window.deleteJobRecord(jobId);
+    if (result && result.success) {
+        if (typeof showToast === "function") {
+            showToast("Job deleted successfully.", "success");
+        }
+        renderClientJobsTable();
+        return;
+    }
+
+    if (typeof showToast === "function") {
+        showToast(result?.error?.message || "Unable to delete this job.", "error");
+    }
+}
+
+window.deleteClientJob = deleteClientJob;
 /**
  * ADMIN DASHBOARD ENGINE
  */
@@ -399,11 +456,16 @@ function renderAdminUsersTable() {
     const users = typeof getUsers === "function" ? getUsers() : [];
     table.innerHTML = users.map(u => `
         <tr>
-            <td><strong>${u.name || `${u.firstName} ${u.lastName}`}</strong></td>
+            <td><strong>${u.name || `${u.firstName || ""} ${u.lastName || ""}`.trim() || "User"}</strong></td>
             <td>${u.email}</td>
-            <td><span class="status-indicator">${u.role.toUpperCase()}</span></td>
+            <td><span class="status-indicator">${(u.role || "user").toUpperCase()}</span></td>
             <td><span class="badge badge-success">ACTIVE</span></td>
-            <td><button onclick="if(typeof showToast === 'function') showToast('User privileges updated', 'info')" class="btn btn-outline btn-sm">Manage</button></td>
+            <td>
+                <div style="display:flex; gap:8px; flex-wrap:wrap;">
+                    <button onclick="if(typeof showToast === 'function') showToast('User privileges updated', 'info')" class="btn btn-outline btn-sm">Manage</button>
+                    <button onclick="deleteUserAccount('${u.id}'); renderAdminUsersTable();" class="btn btn-outline btn-sm" style="border-color: rgba(239,68,68,0.5); color: #dc2626;">Delete</button>
+                </div>
+            </td>
         </tr>
     `).join("");
 }

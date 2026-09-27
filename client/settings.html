@@ -91,10 +91,10 @@
                 <div class="glass-card" style="padding: 36px; border-radius: var(--radius-xl); max-width: 740px; margin: 0 auto;">
                     <h2 style="font-size: 1.45rem; font-weight: 800; color: var(--text-dark); margin-bottom: 24px;">Company Profile & Billing Preferences</h2>
 
-                    <form onsubmit="event.preventDefault(); if(typeof showToast==='function') showToast('Company settings updated successfully!', 'success');">
+                    <form id="clientSettingsForm" onsubmit="event.preventDefault();">
                         <div style="margin-bottom: 16px;">
                             <label>Company / Organization Name</label>
-                            <input type="text" value="Apex Tech Ventures" style="width: 100%;">
+                            <input id="clientCompanyName" type="text" value="Apex Tech Ventures" style="width: 100%;">
                         </div>
 
                         <div style="margin-bottom: 16px;">
