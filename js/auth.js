@@ -359,6 +359,19 @@ async function handleRegisterSubmit(e) {
     e.preventDefault();
     clearAlert("regAlert");
 
+    try {
+        await window.supabaseBootstrapPromise;
+        await window.supabaseReady;
+    } catch (error) {
+        setAlert("regAlert", "Cloud sign-up is temporarily unavailable. Please try again shortly.");
+        return;
+    }
+
+    if (!(window.isSupabaseConfigured && window.isSupabaseConfigured()) || !window.supabaseClient) {
+        setAlert("regAlert", "Cloud sign-up is not configured. Please contact support.");
+        return;
+    }
+
     const role = document.getElementById("selectedRole")?.value || "freelancer";
     const firstName = document.getElementById("firstName")?.value.trim();
     const lastName = document.getElementById("lastName")?.value.trim();
@@ -463,52 +476,6 @@ async function handleRegisterSubmit(e) {
         }
     }
 
-    const users = getUsers();
-    if (users.some(u => String(u.email || '').toLowerCase() === String(email).toLowerCase())) {
-        setAlert("regAlert", "An account with this email address already exists.");
-        return;
-    }
-
-    const newUser = {
-        id: "usr-" + Date.now(),
-        role: role,
-        firstName: firstName,
-        lastName: lastName,
-        name: `${firstName} ${lastName}`,
-        email: email,
-        password: password,
-        loggedIn: true,
-        isNewAccount: true,
-        createdAt: new Date().toISOString()
-    };
-
-    if (role === "freelancer") {
-        newUser.skill = document.getElementById("primarySkill")?.value || "Web Development";
-        newUser.title = newUser.skill;
-        newUser.startingPrice = 45000;
-        newUser.rating = 5.0;
-        newUser.completedJobs = 0;
-        newUser.totalEarnings = 0;
-        newUser.activeProjects = 0;
-        newUser.submittedProposals = 0;
-    } else {
-        newUser.company = document.getElementById("companyName")?.value.trim() || "Independent Client";
-        newUser.jobsPosted = 0;
-        newUser.openJobs = 0;
-        newUser.activeProjects = 0;
-        newUser.proposalsReceived = 0;
-        newUser.rating = 5.0;
-    }
-
-    users.push(newUser);
-    saveUsers(users);
-    setCurrentUser(newUser);
-
-    setAlert("regAlert", "Account created successfully! Redirecting to your dashboard...", false);
-
-    setTimeout(() => {
-        redirectBasedOnRole(newUser.role);
-    }, 600);
 }
 
 async function createMissingProfileForAuthUser(userEmail, userId, fallbackRole = "freelancer") {
@@ -556,6 +523,19 @@ async function createMissingProfileForAuthUser(userEmail, userId, fallbackRole =
 async function handleLoginSubmit(e) {
     e.preventDefault();
     clearAlert("loginAlert");
+
+    try {
+        await window.supabaseBootstrapPromise;
+        await window.supabaseReady;
+    } catch (error) {
+        setAlert("loginAlert", "Cloud sign-in is temporarily unavailable. Please try again shortly.");
+        return;
+    }
+
+    if (!(window.isSupabaseConfigured && window.isSupabaseConfigured()) || !window.supabaseClient) {
+        setAlert("loginAlert", "Cloud sign-in is not configured. Please contact support.");
+        return;
+    }
 
     const emailInput = document.getElementById("loginEmail");
     const passwordInput = document.getElementById("loginPassword");
@@ -635,21 +615,6 @@ async function handleLoginSubmit(e) {
         }
     }
 
-    const users = getUsers();
-    const user = users.find(u => u.email === email && u.password === password);
-
-    if (!user) {
-        setAlert("loginAlert", "Invalid email address or password.");
-        return;
-    }
-
-    user.loggedIn = true;
-    setCurrentUser(user);
-    setAlert("loginAlert", "Authenticated! Redirecting to dashboard...", false);
-
-    setTimeout(() => {
-        redirectBasedOnRole(user.role);
-    }, 600);
 }
 
 async function handleLogout() {

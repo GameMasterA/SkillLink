@@ -15,64 +15,84 @@ function isSupabaseConfigured() {
            !SUPABASE_CONFIG.ANON_KEY.includes("your-anon-key");
 }
 
-const supabase = window.supabase && typeof window.supabase.createClient === "function"
-    ? window.supabase.createClient(SUPABASE_CONFIG.URL, SUPABASE_CONFIG.ANON_KEY, {
-        auth: {
-            persistSession: true,
-            autoRefreshToken: true,
-            detectSessionInUrl: true
-        }
-    })
-    : null;
+let supabaseSdkClient = null;
+let supabaseSdkPromise = null;
+
+function getSupabaseSdkClient() {
+    if (supabaseSdkClient) return Promise.resolve(supabaseSdkClient);
+
+    if (!supabaseSdkPromise) {
+        supabaseSdkPromise = new Promise((resolve, reject) => {
+            const initializeClient = () => {
+                if (!window.supabase || typeof window.supabase.createClient !== "function") {
+                    reject(new Error("Supabase SDK did not load"));
+                    return;
+                }
+
+                supabaseSdkClient = window.supabase.createClient(SUPABASE_CONFIG.URL, SUPABASE_CONFIG.ANON_KEY, {
+                    auth: {
+                        persistSession: true,
+                        autoRefreshToken: true,
+                        detectSessionInUrl: true
+                    }
+                });
+                resolve(supabaseSdkClient);
+            };
+
+            if (window.supabase && typeof window.supabase.createClient === "function") {
+                initializeClient();
+                return;
+            }
+
+            const sdkScript = document.createElement("script");
+            sdkScript.src = "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2";
+            sdkScript.onload = initializeClient;
+            sdkScript.onerror = () => reject(new Error("Unable to load Supabase SDK"));
+            document.head.appendChild(sdkScript);
+        });
+    }
+
+    return supabaseSdkPromise;
+}
 
 const supabaseClient = {
     auth: {
         async signUp({ email, password, options = {} }) {
-            if (!supabase) {
-                return { data: null, error: new Error("Supabase client is not available") };
-            }
             try {
-                return await supabase.auth.signUp({ email, password, options });
+                const client = await getSupabaseSdkClient();
+                return await client.auth.signUp({ email, password, options });
             } catch (error) {
                 return { data: null, error };
             }
         },
         async signInWithPassword({ email, password }) {
-            if (!supabase) {
-                return { data: null, error: new Error("Supabase client is not available") };
-            }
             try {
-                return await supabase.auth.signInWithPassword({ email, password });
+                const client = await getSupabaseSdkClient();
+                return await client.auth.signInWithPassword({ email, password });
             } catch (error) {
                 return { data: null, error };
             }
         },
         async signOut() {
-            if (!supabase) {
-                return { error: new Error("Supabase client is not available") };
-            }
             try {
-                return await supabase.auth.signOut();
+                const client = await getSupabaseSdkClient();
+                return await client.auth.signOut();
             } catch (error) {
                 return { error };
             }
         },
         async getUser() {
-            if (!supabase) {
-                return { data: { user: null }, error: new Error("Supabase client is not available") };
-            }
             try {
-                return await supabase.auth.getUser();
+                const client = await getSupabaseSdkClient();
+                return await client.auth.getUser();
             } catch (error) {
                 return { data: { user: null }, error };
             }
         },
         async getSession() {
-            if (!supabase) {
-                return { data: { session: null }, error: new Error("Supabase client is not available") };
-            }
             try {
-                return await supabase.auth.getSession();
+                const client = await getSupabaseSdkClient();
+                return await client.auth.getSession();
             } catch (error) {
                 return { data: { session: null }, error };
             }
@@ -172,7 +192,7 @@ const supabaseClient = {
     }
 };
 
-window.supabase = supabase;
 window.supabaseClient = supabaseClient;
 window.isSupabaseConfigured = isSupabaseConfigured;
 window.SUPABASE_CONFIG = SUPABASE_CONFIG;
+window.supabaseReady = getSupabaseSdkClient().then(() => supabaseClient);

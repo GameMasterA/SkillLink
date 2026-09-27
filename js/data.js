@@ -4,6 +4,30 @@
  * and syncs with LocalStorage.
  */
 
+function loadSkillLinkScript(src) {
+    return new Promise((resolve, reject) => {
+        const script = document.createElement("script");
+        script.src = src;
+        script.onload = resolve;
+        script.onerror = () => reject(new Error(`Unable to load ${src}`));
+        document.head.appendChild(script);
+    });
+}
+
+const appScriptRoot = /\/(admin|client|freelancer)\//.test(window.location.pathname) ? "../" : "";
+window.supabaseBootstrapPromise = (async () => {
+    if (!window.supabaseClient) {
+        await loadSkillLinkScript(`${appScriptRoot}js/supabase-client.js`);
+    }
+    if (window.supabaseReady) {
+        await window.supabaseReady;
+    }
+    return window.supabaseClient || null;
+})().catch(error => {
+    console.error("[SkillLink] Supabase initialization failed:", error);
+    return null;
+});
+
 const STORAGE_KEYS = {
     JOBS: "skillLinkJobs",
     FREELANCERS: "skillLinkFreelancers",
@@ -352,6 +376,7 @@ function toggleSaveJob(jobId) {
 }
 
 async function createJobRecord(jobRecord) {
+    await window.supabaseBootstrapPromise;
     const normalizedJob = normalizeJobRecord(jobRecord);
     const localJobs = getStoredJobs();
     const payload = {
@@ -388,6 +413,7 @@ async function createJobRecord(jobRecord) {
 }
 
 async function updateJobRecord(jobId, updates) {
+    await window.supabaseBootstrapPromise;
     const workingJobs = getStoredJobs();
     const index = workingJobs.findIndex(job => String(job.id) === String(jobId));
     if (index === -1) {
@@ -427,6 +453,7 @@ async function updateJobRecord(jobId, updates) {
 }
 
 async function deleteJobRecord(jobId) {
+    await window.supabaseBootstrapPromise;
     const jobs = getStoredJobs();
     const remainingJobs = jobs.filter(job => String(job.id) !== String(jobId));
     saveStoredJobs(remainingJobs);
@@ -493,6 +520,7 @@ function saveStoredMessages(messages) {
  * Pulls latest jobs and profiles from Supabase cloud when connected, with local persistence fallback.
  */
 async function syncFromCloudDatabase() {
+    await window.supabaseBootstrapPromise;
     if (typeof supabaseClient === "undefined" || !isSupabaseConfigured()) {
         return { success: false, reason: "Supabase credentials not yet configured in js/supabase-client.js" };
     }
