@@ -11,6 +11,7 @@ document.addEventListener("DOMContentLoaded", () => {
  * Main Application Bootstrapper
  */
 function initAppCore() {
+    initFlowerIntroAnimation();
     renderAuthNavbar();
     initMobileNavigation();
     initNavbarScrollEffect();
@@ -20,6 +21,7 @@ function initAppCore() {
     initActiveNavLinks();
     initHeroButtons();
     initFooterYear();
+    initScrollReveal();
 }
 
 /**
@@ -342,6 +344,119 @@ function debounce(func, delay = 300) {
 
 function formatCurrency(amount) {
     return '₦' + Number(amount).toLocaleString('en-NG');
+}
+
+/**
+ * Liquid Glass Flower Intro Animation (V2 — Enhanced)
+ * Creates a cinematic blooming flower of tinted glass petals with glow rings,
+ * then reveals the homepage. Plays on every page load/reload.
+ */
+function initFlowerIntroAnimation() {
+    // Only run on the homepage (index.html or root /)
+    const isHomepage = window.location.pathname.endsWith('index.html') || 
+                       window.location.pathname === '/' ||
+                       window.location.pathname.endsWith('/');
+    
+    if (!isHomepage) return;
+
+    // Mark body for shape hiding
+    document.body.classList.add('flower-intro-running');
+
+    // Build intro container
+    const introContainer = document.createElement('div');
+    introContainer.className = 'flower-intro-container';
+    introContainer.innerHTML = `
+        <div class="flower-glow-ring ring-1"></div>
+        <div class="flower-glow-ring ring-2"></div>
+        <div class="flower-glow-ring ring-3"></div>
+        <div class="flower-center-hub">
+            <div class="flower-petal petal-1"></div>
+            <div class="flower-petal petal-2"></div>
+            <div class="flower-petal petal-3"></div>
+            <div class="flower-petal petal-4"></div>
+            <div class="flower-petal petal-5"></div>
+            <div class="flower-petal petal-6"></div>
+            <div class="flower-petal petal-7"></div>
+            <div class="flower-petal petal-8"></div>
+            <div class="flower-core">
+                <svg viewBox="0 0 36 36" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M11 18C11 14.134 14.134 11 18 11C20.5 11 22.7 12.3 23.9 14.3" stroke="white" stroke-width="2.5" stroke-linecap="round" />
+                    <path d="M25 18C25 21.866 21.866 25 18 25C15.5 25 13.3 23.7 12.1 21.7" stroke="white" stroke-width="2.5" stroke-linecap="round" />
+                    <circle cx="18" cy="18" r="2.5" fill="white" />
+                </svg>
+            </div>
+        </div>
+        <div class="flower-brand-text">
+            <span>Skill</span><span class="flower-brand-accent">Link</span>
+        </div>
+    `;
+    document.body.appendChild(introContainer);
+
+    // Phase 2: after spin & bloom complete (~3000ms), fade out overlay and settle shapes
+    setTimeout(() => {
+        document.body.classList.remove('flower-intro-running');
+        document.body.classList.add('flower-intro-bloomed');
+        introContainer.classList.add('flower-intro-done');
+    }, 3000);
+
+    // Phase 3: clean up after the fade-out transition finishes
+    setTimeout(() => {
+        introContainer.remove();
+        document.body.classList.remove('flower-intro-bloomed');
+    }, 4200);
+}
+
+/**
+ * Smooth Scroll Reveal System using IntersectionObserver
+ * Automatically adds reveal animations to cards, sections, stat-cards, and key content blocks.
+ */
+function initScrollReveal() {
+    // Select elements to animate
+    const revealSelectors = [
+        '.glass-card',
+        '.stat-card',
+        '.job-glass-card',
+        '.category-card',
+        'section[id]',
+        '.footer',
+        '.stats-grid',
+        '.cta-group'
+    ];
+
+    const elements = document.querySelectorAll(revealSelectors.join(','));
+    
+    if (elements.length === 0) return;
+
+    // Add reveal-on-scroll class to all matched elements
+    elements.forEach((el, index) => {
+        // Don't add to intro elements or navbar
+        if (el.closest('.navbar') || el.closest('.flower-intro-container') || el.closest('.sidebar') || el.closest('.top-navbar')) return;
+        
+        el.classList.add('reveal-on-scroll');
+        // Add staggered delay for grouped elements (max 0.15s per item, capped at 0.6s)
+        const delay = Math.min(index * 0.06, 0.6);
+        el.style.transitionDelay = `${delay}s`;
+    });
+
+    // Create the observer
+    const observerOptions = {
+        root: null,
+        rootMargin: '0px 0px -60px 0px',
+        threshold: 0.08
+    };
+
+    const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                entry.target.classList.add('revealed');
+            }
+        });
+    }, observerOptions);
+
+    // Observe all elements
+    document.querySelectorAll('.reveal-on-scroll').forEach(el => {
+        observer.observe(el);
+    });
 }
 
 // Global scope exports

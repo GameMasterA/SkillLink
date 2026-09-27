@@ -82,6 +82,7 @@ function initFreelancerDashboard() {
 
 function renderFreelancerStats() {
     const user = typeof getCurrentUser === "function" ? getCurrentUser() : null;
+    const isNew = user?.isNewAccount || (!user?.id.startsWith("usr-demo"));
     const userId = user ? user.id : "usr-demo-fl";
 
     const projects = typeof getStoredProjects === "function" ? getStoredProjects() : [];
@@ -92,32 +93,54 @@ function renderFreelancerStats() {
     const completedProjects = projects.filter(p => p.freelancerId === userId && p.status === "completed");
     const myProposals = proposals.filter(p => p.freelancerId === userId);
 
-    const totalEarnings = transactions
-        .filter(t => t.userId === userId && t.type === "earning" && t.status === "completed")
-        .reduce((sum, t) => sum + Number(t.amount || 0), 180000);
+    let totalEarnings = 0;
+    if (!isNew) {
+        totalEarnings = transactions
+            .filter(t => t.userId === userId && t.type === "earning" && t.status === "completed")
+            .reduce((sum, t) => sum + Number(t.amount || 0), 180000);
+    } else {
+        totalEarnings = transactions
+            .filter(t => t.userId === userId && t.type === "earning" && t.status === "completed")
+            .reduce((sum, t) => sum + Number(t.amount || 0), 0);
+    }
 
     const elemEarnings = document.getElementById("statTotalEarnings");
     if (elemEarnings) elemEarnings.textContent = typeof formatCurrency === "function" ? formatCurrency(totalEarnings) : `₦${totalEarnings.toLocaleString()}`;
 
     const elemActive = document.getElementById("statActiveProjects");
-    if (elemActive) elemActive.textContent = activeProjects.length || 1;
+    if (elemActive) elemActive.textContent = isNew ? activeProjects.length : (activeProjects.length || 1);
 
     const elemProp = document.getElementById("statSubmittedProposals");
-    if (elemProp) elemProp.textContent = myProposals.length || 1;
+    if (elemProp) elemProp.textContent = isNew ? myProposals.length : (myProposals.length || 1);
 
     const elemComp = document.getElementById("statCompletedJobs");
-    if (elemComp) elemComp.textContent = completedProjects.length + (user?.completedJobs || 28);
+    if (elemComp) elemComp.textContent = isNew ? completedProjects.length : (completedProjects.length + (user?.completedJobs || 28));
 }
 
 function renderFreelancerActiveProjects() {
     const container = document.getElementById("freelancerActiveProjectsList");
     if (!container) return;
 
+    const user = typeof getCurrentUser === "function" ? getCurrentUser() : null;
+    const isNew = user?.isNewAccount || (!user?.id.startsWith("usr-demo"));
+    const userId = user ? user.id : "usr-demo-fl";
+
     const projects = typeof getStoredProjects === "function" ? getStoredProjects() : [];
-    const active = projects.filter(p => p.status === "active");
+    const active = isNew 
+        ? projects.filter(p => p.freelancerId === userId && p.status === "active")
+        : projects.filter(p => p.status === "active");
 
     if (active.length === 0) {
-        container.innerHTML = `<p style="color:var(--text-muted); padding:16px;">No active contracts running.</p>`;
+        container.innerHTML = `
+            <div class="glass-card" style="padding: 28px; text-align: center; border-radius: var(--radius-lg);">
+                <div style="width: 48px; height: 48px; border-radius: 50%; background: rgba(2,132,199,0.1); color: var(--primary); display: flex; align-items: center; justify-content: center; margin: 0 auto 12px;">
+                    <svg class="svg-icon" viewBox="0 0 24 24"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path></svg>
+                </div>
+                <h4 style="font-size: 1rem; font-weight: 700; color: var(--text-dark); margin-bottom: 4px;">No active contracts yet</h4>
+                <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 16px;">Explore open job opportunities and submit proposals to get hired.</p>
+                <a href="../jobs.html" class="btn btn-primary btn-sm">Browse Marketplace Jobs</a>
+            </div>
+        `;
         return;
     }
 
@@ -147,13 +170,21 @@ function renderFreelancerProposalsTable() {
     const container = document.getElementById("freelancerProposalsTable");
     if (!container) return;
 
+    const user = typeof getCurrentUser === "function" ? getCurrentUser() : null;
+    const isNew = user?.isNewAccount || (!user?.id.startsWith("usr-demo"));
+    const userId = user ? user.id : "usr-demo-fl";
+
     const proposals = typeof getStoredProposals === "function" ? getStoredProposals() : [];
-    if (proposals.length === 0) {
-        container.innerHTML = `<tr><td colspan="5" style="text-align:center; padding:20px; color:var(--text-muted);">No proposals submitted yet.</td></tr>`;
+    const myProposals = isNew 
+        ? proposals.filter(p => p.freelancerId === userId)
+        : proposals;
+
+    if (myProposals.length === 0) {
+        container.innerHTML = `<tr><td colspan="5" style="text-align:center; padding:24px; color:var(--text-muted);">No proposals submitted yet. <a href="../jobs.html" style="color:var(--primary); font-weight:600; text-decoration:none;">Find projects to apply</a></td></tr>`;
         return;
     }
 
-    container.innerHTML = proposals.map(p => `
+    container.innerHTML = myProposals.map(p => `
         <tr>
             <td><strong>${p.jobTitle || 'Job Proposal'}</strong></td>
             <td>${p.clientName || 'Client'}</td>
@@ -168,8 +199,21 @@ function renderFreelancerEarningsSummary() {
     const table = document.getElementById("freelancerTransactionsTable");
     if (!table) return;
 
+    const user = typeof getCurrentUser === "function" ? getCurrentUser() : null;
+    const isNew = user?.isNewAccount || (!user?.id.startsWith("usr-demo"));
+    const userId = user ? user.id : "usr-demo-fl";
+
     const transactions = typeof getStoredTransactions === "function" ? getStoredTransactions() : [];
-    table.innerHTML = transactions.map(t => `
+    const myTransactions = isNew 
+        ? transactions.filter(t => t.userId === userId)
+        : transactions;
+
+    if (myTransactions.length === 0) {
+        table.innerHTML = `<tr><td colspan="5" style="text-align:center; padding:24px; color:var(--text-muted);">No financial transactions yet. Your completed milestone payments will appear here.</td></tr>`;
+        return;
+    }
+
+    table.innerHTML = myTransactions.map(t => `
         <tr>
             <td><strong>${t.title}</strong></td>
             <td><span class="status-indicator">${t.type.toUpperCase()}</span></td>
@@ -198,14 +242,21 @@ function initClientDashboard() {
 
 function renderClientStats() {
     const user = typeof getCurrentUser === "function" ? getCurrentUser() : null;
+    const isNew = user?.isNewAccount || (!user?.id.startsWith("usr-demo"));
     const userId = user ? user.id : "usr-demo-cl";
 
     const jobs = typeof getStoredJobs === "function" ? getStoredJobs() : [];
     const proposals = typeof getStoredProposals === "function" ? getStoredProposals() : [];
     const projects = typeof getStoredProjects === "function" ? getStoredProjects() : [];
 
-    const myJobs = jobs.filter(j => j.clientId === userId || j.clientId === "usr-demo-cl");
-    const myProjects = projects.filter(p => p.clientId === userId || p.clientId === "usr-demo-cl");
+    const myJobs = isNew 
+        ? jobs.filter(j => j.clientId === userId)
+        : jobs.filter(j => j.clientId === userId || j.clientId === "usr-demo-cl");
+
+    const myProjects = isNew
+        ? projects.filter(p => p.clientId === userId)
+        : projects.filter(p => p.clientId === userId || p.clientId === "usr-demo-cl");
+
     const openJobs = myJobs.filter(j => j.status === "open");
 
     const elemJobs = document.getElementById("clientStatJobsPosted");
@@ -215,21 +266,27 @@ function renderClientStats() {
     if (elemOpen) elemOpen.textContent = openJobs.length;
 
     const elemProj = document.getElementById("clientStatActiveProjects");
-    if (elemProj) elemProj.textContent = myProjects.filter(p => p.status === "active").length || 1;
+    if (elemProj) elemProj.textContent = isNew ? myProjects.filter(p => p.status === "active").length : (myProjects.filter(p => p.status === "active").length || 1);
 
     const elemProp = document.getElementById("clientStatProposalsReceived");
-    if (elemProp) elemProp.textContent = proposals.length || 8;
+    if (elemProp) elemProp.textContent = isNew ? 0 : (proposals.length || 8);
 }
 
 function renderClientJobsTable() {
     const table = document.getElementById("clientJobsTable");
     if (!table) return;
 
+    const user = typeof getCurrentUser === "function" ? getCurrentUser() : null;
+    const isNew = user?.isNewAccount || (!user?.id.startsWith("usr-demo"));
+    const userId = user ? user.id : "usr-demo-cl";
+
     const jobs = typeof getStoredJobs === "function" ? getStoredJobs() : [];
-    const myJobs = jobs.filter(j => j.clientId === "usr-demo-cl" || j.clientId === getCurrentUser()?.id);
+    const myJobs = isNew 
+        ? jobs.filter(j => j.clientId === userId)
+        : jobs.filter(j => j.clientId === "usr-demo-cl" || j.clientId === userId);
 
     if (myJobs.length === 0) {
-        table.innerHTML = `<tr><td colspan="5" style="text-align:center; padding:20px; color:var(--text-muted);">No jobs posted yet.</td></tr>`;
+        table.innerHTML = `<tr><td colspan="5" style="text-align:center; padding:24px; color:var(--text-muted);">No jobs posted yet. <a href="post-job.html" style="color:var(--primary); font-weight:600; text-decoration:none;">Post your first job offer</a></td></tr>`;
         return;
     }
 

@@ -6,9 +6,10 @@
     <title>Sign In — SkillLink Marketplace</title>
     <meta name="description" content="Sign in to your SkillLink account to manage freelance projects, proposals, contracts, and talent requests.">
     <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/auth.css">
     <link rel="stylesheet" href="css/responsive.css">
 </head>
-<body style="min-height: 100vh; display: flex; flex-direction: column; justify-content: center; align-items: center; padding: 2rem 1rem;">
+<body class="auth-body">
 
     <!-- 6 Floating Liquid Glass Background Shapes -->
     <div class="bg-shape shape-1"></div>
@@ -18,8 +19,8 @@
     <div class="bg-shape shape-5"></div>
     <div class="bg-shape shape-6"></div>
 
-    <main style="position: relative; z-index: 10; width: 100%; max-width: 500px; text-align: center;">
-        <a href="index.html" class="logo" style="margin-bottom: 2rem; display: inline-flex;">
+    <main class="auth-wrapper">
+        <a href="index.html" class="logo">
             <svg class="logo-mark-svg" viewBox="0 0 36 36" fill="none" xmlns="http://www.w3.org/2000/svg">
                 <defs>
                     <linearGradient id="logoGradLogin" x1="2" y1="2" x2="34" y2="34" gradientUnits="userSpaceOnUse">
@@ -35,20 +36,20 @@
             <span>Skill<span style="color: var(--primary);">Link</span></span>
         </a>
 
-        <section class="glass-card" style="padding: 2.5rem; border-radius: var(--radius-xl);">
-            <div style="margin-bottom: 2rem;">
-                <span class="badge" style="margin-bottom: 8px;">Welcome Back</span>
-                <h1 style="font-size: 1.85rem; font-weight: 800; color: var(--text-dark); margin-bottom: 0.4rem;">Sign in to SkillLink</h1>
-                <p style="color: var(--text-muted); font-size: 0.95rem;">Access your client, freelancer, or admin dashboard.</p>
+        <section class="auth-card form-card">
+            <div class="auth-header">
+                <span class="badge">Welcome Back</span>
+                <h1>Sign in to SkillLink</h1>
+                <p>Access your client, freelancer, or admin dashboard.</p>
             </div>
 
             <!-- Demo Account Quick Sign-in Buttons -->
-            <div style="margin-bottom: 1.5rem; padding: 14px; background: rgba(255,255,255,0.45); border-radius: var(--radius-md); border: 1px solid var(--glass-border);">
-                <p style="font-size: 0.75rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing:0.04em; margin-bottom: 10px; display:flex; align-items:center; justify-content:center; gap:6px;">
+            <div class="demo-login-panel">
+                <p class="demo-login-label">
                     <svg class="svg-icon" viewBox="0 0 24 24" style="width:14px; height:14px; color:var(--primary);"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg>
                     <span>Quick Demo Login</span>
                 </p>
-                <div style="display: flex; gap: 8px; justify-content: center; flex-wrap: wrap;">
+                <div class="demo-login-btns">
                     <button type="button" onclick="fillDemoLogin('freelancer@skilllink.com', 'password123')" class="btn btn-outline btn-sm" style="font-size: 0.8rem; gap:6px;">
                         <svg class="svg-icon" viewBox="0 0 24 24" style="width:14px; height:14px;"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
                         <span>Freelancer</span>
@@ -65,29 +66,31 @@
             </div>
 
             <form id="loginForm">
-                <div style="text-align: left; margin-bottom: 1.25rem;">
+                <div class="form-group">
                     <label for="loginEmail">Email Address</label>
                     <input type="email" id="loginEmail" placeholder="you@example.com" required style="width: 100%;">
                 </div>
 
-                <div style="text-align: left; margin-bottom: 1.25rem;">
-                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.4rem;">
+                <div class="form-group">
+                    <div class="label-row">
                         <label for="loginPassword" style="margin-bottom:0;">Password</label>
-                        <a href="#" onclick="if(typeof showToast==='function') showToast('Demo password reset link sent!', 'info')" style="font-size: 0.85rem; color: var(--primary); text-decoration: none; font-weight: 600;">Forgot Password?</a>
+                        <a href="#" onclick="if(typeof showToast==='function') showToast('Demo password reset link sent!', 'info')" class="inline-link" style="font-size: 0.85rem;">Forgot Password?</a>
                     </div>
                     <input type="password" id="loginPassword" placeholder="Enter password" required style="width: 100%;">
                 </div>
 
                 <button type="submit" class="btn btn-primary" style="width: 100%; padding: 0.85rem; font-weight: 700; margin-top: 0.5rem;">Sign In</button>
-                <div class="form-alert" id="loginAlert" style="margin-top: 1rem; font-size: 0.85rem; display: none;"></div>
+                <div class="form-alert" id="loginAlert" style="display: none;"></div>
             </form>
 
-            <p style="margin-top: 1.75rem; font-size: 0.9rem; color: var(--text-muted);">
-                Don't have an account? <a href="register.html" style="color: var(--primary); font-weight: 600; text-decoration: none;">Create one</a>
+            <p class="auth-switch">
+                Don't have an account? <a href="register.html">Create one</a>
             </p>
         </section>
     </main>
 
+    <script src="js/config.js"></script>
+    <script src="js/supabase-client.js"></script>
     <script src="js/data.js"></script>
     <script src="js/auth.js"></script>
     <script src="js/main.js"></script>
@@ -104,5 +107,6 @@
             }
         }
     </script>
+
 </body>
 </html>

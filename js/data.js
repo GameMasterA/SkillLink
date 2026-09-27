@@ -362,6 +362,35 @@ function saveStoredMessages(messages) {
     localStorage.setItem(STORAGE_KEYS.MESSAGES, JSON.stringify(messages));
 }
 
+/**
+ * Cloud Database Synchronization Engine (Supabase)
+ * Pulls latest jobs and profiles from Supabase cloud when connected, with local persistence fallback.
+ */
+async function syncFromCloudDatabase() {
+    if (typeof supabaseClient === "undefined" || !isSupabaseConfigured()) {
+        return { success: false, reason: "Supabase credentials not yet configured in js/supabase-client.js" };
+    }
+
+    try {
+        const jobsTable = await supabaseClient.from("jobs");
+        const { data: cloudJobs, error: jobsErr } = await jobsTable.select();
+        if (!jobsErr && cloudJobs && cloudJobs.length > 0) {
+            saveStoredJobs(cloudJobs);
+        }
+
+        const profilesTable = await supabaseClient.from("profiles");
+        const { data: cloudProfiles, error: profErr } = await profilesTable.select();
+        if (!profErr && cloudProfiles && cloudProfiles.length > 0) {
+            saveStoredFreelancers(cloudProfiles.filter(p => p.role === "freelancer"));
+        }
+
+        return { success: true, cloudJobsCount: cloudJobs ? cloudJobs.length : 0 };
+    } catch (err) {
+        console.warn("[SkillLink Cloud] Sync encountered an error:", err);
+        return { success: false, error: err };
+    }
+}
+
 // Initializer execution
 initMarketplaceData();
 
@@ -381,3 +410,4 @@ window.getStoredTransactions = getStoredTransactions;
 window.saveStoredTransactions = saveStoredTransactions;
 window.getStoredMessages = getStoredMessages;
 window.saveStoredMessages = saveStoredMessages;
+window.syncFromCloudDatabase = syncFromCloudDatabase;

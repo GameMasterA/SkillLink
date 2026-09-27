@@ -8,6 +8,16 @@ const STORAGE_CURRENT_USER = "skillLinkUser";
 
 const DEFAULT_USERS = [
     {
+        id: "usr-demo-adm",
+        role: "admin",
+        firstName: "System",
+        lastName: "Admin",
+        name: "System Admin",
+        email: "admin@skilllink.com",
+        password: "admin123",
+        createdAt: "2026-01-01T00:00:00.000Z"
+    },
+    {
         id: "usr-demo-fl",
         role: "freelancer",
         firstName: "John",
@@ -36,22 +46,20 @@ const DEFAULT_USERS = [
         jobsPosted: 12,
         rating: 4.9,
         createdAt: "2026-01-10T10:30:00.000Z"
-    },
-    {
-        id: "usr-demo-adm",
-        role: "admin",
-        firstName: "System",
-        lastName: "Admin",
-        name: "System Admin",
-        email: "admin@skilllink.com",
-        password: "admin123",
-        createdAt: "2026-01-01T00:00:00.000Z"
     }
 ];
 
 function initUsers() {
-    if (!localStorage.getItem(STORAGE_USERS)) {
+    let stored = localStorage.getItem(STORAGE_USERS);
+    if (!stored) {
         localStorage.setItem(STORAGE_USERS, JSON.stringify(DEFAULT_USERS));
+    } else {
+        // Ensure admin always exists in storage even if storage was initialized before
+        let users = JSON.parse(stored);
+        if (!users.some(u => u.email === "admin@skilllink.com")) {
+            users.push(DEFAULT_USERS[0]);
+            localStorage.setItem(STORAGE_USERS, JSON.stringify(users));
+        }
     }
 }
 
@@ -243,6 +251,7 @@ function handleRegisterSubmit(e) {
         email: email,
         password: password,
         loggedIn: true,
+        isNewAccount: true,
         createdAt: new Date().toISOString()
     };
 
@@ -252,9 +261,15 @@ function handleRegisterSubmit(e) {
         newUser.startingPrice = 45000;
         newUser.rating = 5.0;
         newUser.completedJobs = 0;
+        newUser.totalEarnings = 0;
+        newUser.activeProjects = 0;
+        newUser.submittedProposals = 0;
     } else {
         newUser.company = document.getElementById("companyName")?.value.trim() || "Independent Client";
         newUser.jobsPosted = 0;
+        newUser.openJobs = 0;
+        newUser.activeProjects = 0;
+        newUser.proposalsReceived = 0;
         newUser.rating = 5.0;
     }
 
@@ -262,7 +277,7 @@ function handleRegisterSubmit(e) {
     saveUsers(users);
     setCurrentUser(newUser);
 
-    setAlert("regAlert", "Account created successfully! Redirecting...", false);
+    setAlert("regAlert", "Account created successfully! Redirecting to your dashboard...", false);
 
     setTimeout(() => {
         redirectBasedOnRole(newUser.role);

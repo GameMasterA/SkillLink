@@ -1,0 +1,82 @@
+/* Responsive styles for the SkillLink application */
+
+/* Mobile styles */
+@media (max-width: 768px) {
+    body {
+        font-size: 14px;
+    }
+
+    .auth-wrapper {
+        padding: 20px;
+    }
+
+    .role-selector {
+        flex-direction: column;
+    }
+
+    .role-card {
+        margin-bottom: 20px;
+    }
+
+    .form-row {
+        flex-direction: column;
+    }
+
+    .form-group {
+        margin-bottom: 15px;
+    }
+
+    .btn {
+        padding: 0.75rem;
+    }
+}
+
+/* Tablet styles */
+@media (min-width: 769px) and (max-width: 1024px) {
+    body {
+        font-size: 16px;
+    }
+
+    .auth-wrapper {
+        padding: 40px;
+    }
+
+    .role-selector {
+        flex-direction: row;
+        justify-content: space-between;
+    }
+
+    .form-row {
+        flex-direction: row;
+        justify-content: space-between;
+    }
+
+    .form-group {
+        width: 48%;
+    }
+}
+
+/* Desktop styles */
+@media (min-width: 1025px) {
+    body {
+        font-size: 18px;
+    }
+
+    .auth-wrapper {
+        padding: 60px;
+    }
+
+    .role-selector {
+        flex-direction: row;
+        justify-content: space-around;
+    }
+
+    .form-row {
+        flex-direction: row;
+        justify-content: space-between;
+    }
+
+    .form-group {
+        width: 30%;
+    }
+}

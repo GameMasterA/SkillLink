@@ -114,39 +114,48 @@
   border-radius: var(--radius-lg);
   background: rgba(255, 255, 255, 0.5);
   backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
   cursor: pointer;
   text-align: left;
   transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .role-card:hover {
   transform: translateY(-4px);
-  background: rgba(255, 255, 255, 0.8);
+  background: rgba(255, 255, 255, 0.85);
   border-color: var(--primary);
   box-shadow: 0 14px 30px rgba(2, 132, 199, 0.16);
 }
 
+.role-card:active {
+  transform: scale(0.98);
+}
+
 .role-icon {
-  width: 48px;
-  height: 48px;
+  width: 52px;
+  height: 52px;
   border-radius: 14px;
-  background: rgba(2, 132, 199, 0.1);
+  background: rgba(2, 132, 199, 0.12);
   color: var(--primary);
   display: flex;
   align-items: center;
   justify-content: center;
   margin-bottom: 16px;
   border: 1px solid rgba(2, 132, 199, 0.2);
+  flex-shrink: 0;
 }
 
 .role-info h2 {
-  font-size: 1.15rem;
+  font-size: 1.2rem;
   color: var(--text-dark);
   margin-bottom: 6px;
+  font-weight: 700;
 }
 
 .role-info p {
-  font-size: 0.85rem;
+  font-size: 0.88rem;
   color: var(--text-muted);
   line-height: 1.5;
 }
@@ -210,4 +219,83 @@
 
 .hidden {
   display: none !important;
+}
+
+/* Auth body helper */
+.auth-body {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  padding: 2rem 1rem;
+}
+
+/* Demo Login Panel */
+.demo-login-panel {
+  margin-bottom: 1.5rem;
+  padding: 14px;
+  background: rgba(255, 255, 255, 0.45);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--glass-border);
+}
+
+.demo-login-label {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  margin-bottom: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+
+.demo-login-btns {
+  display: flex;
+  gap: 8px;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+/* Mobile Auth Overrides */
+@media (max-width: 600px) {
+  .auth-body {
+    padding: 1.25rem 0.75rem;
+  }
+
+  .auth-card {
+    padding: 24px 18px !important;
+    border-radius: var(--radius-lg) !important;
+  }
+
+  .auth-header h1 {
+    font-size: 1.45rem;
+  }
+
+  .role-selector {
+    grid-template-columns: 1fr;
+    gap: 14px;
+  }
+
+  .role-card {
+    padding: 20px;
+  }
+
+  .form-row {
+    grid-template-columns: 1fr;
+    gap: 0;
+  }
+
+  .demo-login-btns {
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .demo-login-btns .btn {
+    width: 100%;
+    justify-content: center;
+  }
 }

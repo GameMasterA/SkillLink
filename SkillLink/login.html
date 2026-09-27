@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login — SkillLink Marketplace</title>
+    <meta name="description" content="Log in to your SkillLink account to access your dashboard and manage your projects.">
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/auth.css">
+    <link rel="stylesheet" href="css/responsive.css">
+</head>
+<body class="auth-body">
+
+    <main class="auth-wrapper">
+        <a href="index.html" class="logo">
+            <span>Skill<span style="color: var(--primary);">Link</span></span>
+        </a>
+
+        <section class="auth-card">
+            <div class="auth-header">
+                <h1>Welcome Back!</h1>
+                <p>Please log in to your account.</p>
+            </div>
+
+            <form id="loginForm">
+                <div class="form-group">
+                    <label for="loginEmail">Email Address</label>
+                    <input type="email" id="loginEmail" placeholder="you@example.com" required style="width: 100%;">
+                </div>
+
+                <div class="form-group">
+                    <label for="loginPassword">Password</label>
+                    <input type="password" id="loginPassword" placeholder="Enter your password" required style="width: 100%;">
+                </div>
+
+                <button type="submit" class="btn btn-primary" style="width: 100%; padding: 0.85rem; font-weight: 700; margin-top: 0.5rem;">Log In</button>
+                <div class="form-alert" id="loginAlert" style="display: none;"></div>
+            </form>
+
+            <p class="auth-switch">
+                Don't have an account? <a href="register.html">Create one</a>
+            </p>
+        </section>
+    </main>
+
+    <script src="js/config.js"></script>
+    <script src="js/supabase-client.js"></script>
+    <script src="js/auth.js"></script>
+    <script src="js/main.js"></script>
+</body>
+</html>

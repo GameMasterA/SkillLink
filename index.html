@@ -73,12 +73,26 @@
         Connect top verified freelancers and modern businesses with protected milestone escrows, real-time messaging, and verified ratings.
       </p>
 
-      <div class="cta-group" style="display: flex; gap: 16px; justify-content: center; align-items: center; margin-bottom: 64px;">
-        <button class="btn btn-primary btn-lg" id="hireBtn">
-          <span>I Want to Hire</span>
-          <svg class="svg-icon" viewBox="0 0 24 24" style="width:18px; height:18px;"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
+      <div class="cta-group" style="display: flex; gap: 16px; justify-content: center; align-items: stretch; margin-bottom: 64px;">
+        <button class="btn btn-primary btn-with-desc" id="hireBtn">
+          <div class="btn-icon-wrap">
+            <svg class="svg-icon" viewBox="0 0 24 24" style="width:22px; height:22px; color:#fff;"><rect x="2" y="7" width="20" height="14" rx="2" ry="2"></rect><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"></path></svg>
+          </div>
+          <div class="btn-text-group">
+            <span class="btn-title">I Want to Hire Talent</span>
+            <span class="btn-desc">Post jobs & hire top verified pros</span>
+          </div>
         </button>
-        <button class="btn btn-glass btn-lg" id="workBtn">I Want to Work</button>
+
+        <button class="btn btn-glass btn-with-desc" id="workBtn">
+          <div class="btn-icon-wrap" style="background: rgba(2, 132, 199, 0.1); border-color: rgba(2, 132, 199, 0.2);">
+            <svg class="svg-icon" viewBox="0 0 24 24" style="width:22px; height:22px; color:var(--primary);"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+          </div>
+          <div class="btn-text-group">
+            <span class="btn-title">I Want to Work</span>
+            <span class="btn-desc">Find jobs & get paid securely</span>
+          </div>
+        </button>
       </div>
 
       <!-- Platform Stats (Level 2 Liquid Glass) -->
@@ -244,6 +258,8 @@
     </div>
   </footer>
 
+  <script src="js/config.js"></script>
+  <script src="js/supabase-client.js"></script>
   <script src="js/data.js"></script>
   <script src="js/auth.js"></script>
   <script src="js/main.js"></script>
