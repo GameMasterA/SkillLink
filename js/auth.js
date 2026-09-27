@@ -226,7 +226,7 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 });
 
-function handleRegisterSubmit(e) {
+async function handleRegisterSubmit(e) {
     e.preventDefault();
     clearAlert("regAlert");
 
@@ -236,10 +236,73 @@ function handleRegisterSubmit(e) {
     const email = document.getElementById("regEmail")?.value.trim().toLowerCase();
     const password = document.getElementById("regPassword")?.value;
 
+    if (!firstName || !lastName || !email || !password) {
+        setAlert("regAlert", "Please complete all required fields.");
+        return;
+    }
+
     const users = getUsers();
     if (users.some(u => u.email === email)) {
         setAlert("regAlert", "An account with this email address already exists.");
         return;
+    }
+
+    if (window.isSupabaseConfigured && window.isSupabaseConfigured()) {
+        try {
+            const { data, error } = await window.supabaseClient.auth.signUp({
+                email,
+                password,
+                options: {
+                    data: {
+                        role,
+                        first_name: firstName,
+                        last_name: lastName,
+                        name: `${firstName} ${lastName}`
+                    }
+                }
+            });
+
+            if (error) {
+                setAlert("regAlert", error.message || "Unable to create account right now.");
+                return;
+            }
+
+            const profilePayload = {
+                id: data?.user?.id || `usr-${Date.now()}`,
+                email,
+                role,
+                first_name: firstName,
+                last_name: lastName,
+                name: `${firstName} ${lastName}`,
+                title: role === "freelancer" ? (document.getElementById("primarySkill")?.value || "Web Development") : "Client",
+                primary_skill: role === "freelancer" ? (document.getElementById("primarySkill")?.value || "Web Development") : null,
+                company: role === "client" ? (document.getElementById("companyName")?.value.trim() || "Independent Client") : null,
+                starting_price: role === "freelancer" ? 45000 : 0,
+                completed_jobs: role === "freelancer" ? 0 : 0,
+                jobs_posted: role === "client" ? 0 : 0,
+                rating: 5.0,
+                reviews_count: 0,
+                availability: "Available Now",
+                created_at: new Date().toISOString()
+            };
+
+            const { error: profileError } = await window.supabaseClient.from("profiles").insert([profilePayload]);
+            if (profileError) {
+                setAlert("regAlert", "Account created, but profile sync failed. Please sign in and complete your profile.");
+                return;
+            }
+
+            setCurrentUser(profilePayload);
+            setAlert("regAlert", "Account created successfully! Redirecting to your dashboard...", false);
+
+            setTimeout(() => {
+                redirectBasedOnRole(role);
+            }, 600);
+            return;
+        } catch (err) {
+            setAlert("regAlert", err.message || "Unable to create your account.");
+            return;
+        }
     }
 
     const newUser = {
@@ -284,7 +347,7 @@ function handleRegisterSubmit(e) {
     }, 600);
 }
 
-function handleLoginSubmit(e) {
+async function handleLoginSubmit(e) {
     e.preventDefault();
     clearAlert("loginAlert");
 
@@ -295,6 +358,33 @@ function handleLoginSubmit(e) {
 
     const email = emailInput.value.trim().toLowerCase();
     const password = passwordInput.value;
+
+    if (window.isSupabaseConfigured && window.isSupabaseConfigured()) {
+        try {
+            const { data, error } = await window.supabaseClient.auth.signInWithPassword({ email, password });
+
+            if (error) {
+                setAlert("loginAlert", error.message || "Invalid email address or password.");
+                return;
+            }
+
+            const profileResult = await window.supabaseClient.from("profiles").select("*", { email: email });
+            const profile = profileResult.data && profileResult.data[0]
+                ? profileResult.data[0]
+                : { id: data.user.id, email, role: "freelancer", name: data.user.email.split("@")[0] };
+
+            setCurrentUser(profile);
+            setAlert("loginAlert", "Authenticated! Redirecting to dashboard...", false);
+
+            setTimeout(() => {
+                redirectBasedOnRole(profile.role || "freelancer");
+            }, 600);
+            return;
+        } catch (err) {
+            setAlert("loginAlert", err.message || "Login failed.");
+            return;
+        }
+    }
 
     const users = getUsers();
     const user = users.find(u => u.email === email && u.password === password);
@@ -313,7 +403,10 @@ function handleLoginSubmit(e) {
     }, 600);
 }
 
-function handleLogout() {
+async function handleLogout() {
+    if (window.isSupabaseConfigured && window.isSupabaseConfigured() && window.supabaseClient && window.supabaseClient.auth) {
+        await window.supabaseClient.auth.signOut();
+    }
     localStorage.removeItem(STORAGE_CURRENT_USER);
     const isInSubfolder = window.location.pathname.includes('/client/') || 
                           window.location.pathname.includes('/freelancer/') || 
