@@ -390,6 +390,11 @@ async function handleRegisterSubmit(e) {
                 return;
             }
 
+            if (!data?.user) {
+                setAlert("regAlert", "Supabase did not return a new account. Please try again.");
+                return;
+            }
+
             const authUser = data?.user;
             const localUserMirror = {
                 id: authUser?.id || `usr-${Date.now()}`,
@@ -439,6 +444,11 @@ async function handleRegisterSubmit(e) {
                 allUsers.push(localUserMirror);
             }
             saveUsers(allUsers);
+
+            if (!data.session) {
+                setAlert("regAlert", "Account created. Check your email and confirm your address before signing in.", false);
+                return;
+            }
 
             setCurrentUser(localUserMirror);
             setAlert("regAlert", "Account created successfully! Redirecting to your dashboard...", false);
@@ -560,7 +570,10 @@ async function handleLoginSubmit(e) {
             const { data, error } = await window.supabaseClient.auth.signInWithPassword({ email, password });
 
             if (error) {
-                setAlert("loginAlert", error.message || "Invalid email address or password.");
+                const message = error.code === "email_not_confirmed"
+                    ? "Please confirm your email address using the link we sent before signing in."
+                    : (error.message || "Invalid email address or password.");
+                setAlert("loginAlert", message);
                 return;
             }
 
