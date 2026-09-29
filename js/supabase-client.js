@@ -213,6 +213,32 @@ const supabaseClient = {
                 }
             }
         };
+    },
+    async rpc(functionName, parameters = {}) {
+        if (!isSupabaseConfigured()) {
+            return { data: null, error: new Error("Supabase not configured") };
+        }
+
+        try {
+            const headers = await getAuthenticatedSessionData();
+            if (!headers?.access_token) {
+                return { data: null, error: new Error("Supabase user session is required for this request") };
+            }
+
+            const response = await fetch(`${SUPABASE_CONFIG.URL}/rest/v1/rpc/${encodeURIComponent(functionName)}`, {
+                method: "POST",
+                headers: {
+                    apikey: SUPABASE_CONFIG.ANON_KEY,
+                    Authorization: `Bearer ${headers.access_token}`,
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify(parameters)
+            });
+            if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+            return { data: await response.json(), error: null };
+        } catch (error) {
+            return { data: null, error };
+        }
     }
 };
 

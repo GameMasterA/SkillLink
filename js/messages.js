@@ -230,18 +230,14 @@ async function persistCloudMessage(message, receiverId) {
 
 async function markCloudMessagesRead(conversation, userId) {
     const client = getCloudMessagesClient();
-    if (!client) return { supported: false, error: null };
+    if (!client?.rpc) return { supported: false, error: null };
 
     const sessionState = await ensureCloudMessagingSession();
     if (!sessionState.supported) return { supported: false, error: sessionState.error };
 
     const sender = getConversationParticipant(conversation, userId);
     if (!sender) return { supported: true, error: null };
-    const { error } = await client.from("messages").update({ is_read: true }, {
-        sender_id: String(sender.id),
-        receiver_id: String(userId),
-        is_read: false
-    });
+    const { error } = await client.rpc("mark_messages_read", { p_sender_id: String(sender.id) });
     return { supported: true, error: error || null };
 }
 
