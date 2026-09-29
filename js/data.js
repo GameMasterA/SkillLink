@@ -157,6 +157,59 @@ function normalizeJobRecord(job = {}) {
     return normalized;
 }
 
+function normalizeProposalRecord(proposal = {}) {
+    return {
+        ...proposal,
+        id: proposal.id || `proposal-${Date.now()}`,
+        jobId: proposal.jobId || proposal.job_id || "",
+        jobTitle: proposal.jobTitle || proposal.job_title || proposal.title || "Job Proposal",
+        clientId: proposal.clientId || proposal.client_id || "",
+        freelancerId: proposal.freelancerId || proposal.freelancer_id || "",
+        freelancerName: proposal.freelancerName || proposal.freelancer_name || "Freelancer",
+        clientName: proposal.clientName || proposal.client_name || "Client",
+        bidAmount: Number(proposal.bidAmount ?? proposal.bid_amount ?? 0),
+        estimatedDuration: proposal.estimatedDuration || proposal.delivery_time || proposal.deliveryTime || "",
+        coverLetter: proposal.coverLetter || proposal.cover_letter || "",
+        status: proposal.status || "pending",
+        submittedDate: proposal.submittedDate || proposal.created_at || ""
+    };
+}
+
+function normalizeProjectRecord(project = {}) {
+    return {
+        ...project,
+        id: project.id || "",
+        jobId: project.jobId || project.job_id || "",
+        jobTitle: project.jobTitle || project.title || "Contract",
+        clientId: project.clientId || project.client_id || "",
+        freelancerId: project.freelancerId || project.freelancer_id || "",
+        clientName: project.clientName || project.client_name || "Client",
+        freelancerName: project.freelancerName || project.freelancer_name || "Freelancer",
+        amount: Number(project.amount || 0),
+        status: project.status || "pending",
+        milestones: Array.isArray(project.milestones) ? project.milestones : [],
+        progress: Number(project.progress || 0),
+        createdAt: project.createdAt || project.created_at || "",
+        startDate: project.startDate || (project.created_at ? new Date(project.created_at).toLocaleDateString() : "Recently")
+    };
+}
+
+function normalizeTransactionRecord(transaction = {}) {
+    const createdAt = transaction.createdAt || transaction.created_at || "";
+    return {
+        ...transaction,
+        id: transaction.id || "",
+        userId: transaction.userId || transaction.user_id || "",
+        title: transaction.title || transaction.reference || transaction.type || "Transaction",
+        type: transaction.type || "payment",
+        amount: Number(transaction.amount || 0),
+        status: transaction.status || "pending",
+        reference: transaction.reference || "",
+        createdAt,
+        date: transaction.date || (createdAt ? new Date(createdAt).toLocaleDateString() : "")
+    };
+}
+
 function getStoredJobs() {
     initMarketplaceData();
     const jobs = JSON.parse(localStorage.getItem(STORAGE_KEYS.JOBS)) || [];
@@ -378,38 +431,172 @@ async function deleteJobRecord(jobId) {
 
 function getStoredProposals() {
     initMarketplaceData();
-    return JSON.parse(localStorage.getItem(STORAGE_KEYS.PROPOSALS)) || [];
+    const proposals = JSON.parse(localStorage.getItem(STORAGE_KEYS.PROPOSALS)) || [];
+    return Array.isArray(proposals) ? proposals.map(normalizeProposalRecord) : [];
 }
 
-function saveProposal(proposalData) {
-    const proposals = getStoredProposals();
-    proposals.push(proposalData);
-    localStorage.setItem(STORAGE_KEYS.PROPOSALS, JSON.stringify(proposals));
-    
+function saveStoredProposals(proposals) {
+    const normalized = Array.isArray(proposals) ? proposals.map(normalizeProposalRecord) : [];
+    localStorage.setItem(STORAGE_KEYS.PROPOSALS, JSON.stringify(normalized));
+}
+
+async function createProposalRecord(proposalData) {
+    await window.supabaseBootstrapPromise;
+    if (!window.isSupabaseConfigured?.()) {
+        return { success: false, error: new Error("Cloud proposals are not configured.") };
+    }
+
+    const session = (await window.supabaseClient.auth.getSession())?.data?.session;
+    if (!session?.user?.id || String(session.user.id) !== String(proposalData.freelancerId)) {
+        return { success: false, error: new Error("Sign in again before submitting a proposal.") };
+    }
+
+    const { data, error } = await window.supabaseClient.rpc("submit_proposal", {
+        p_job_id: String(proposalData.jobId),
+        p_bid_amount: Number(proposalData.bidAmount),
+        p_delivery_time: String(proposalData.estimatedDuration || "1 week"),
+        p_cover_letter: String(proposalData.coverLetter || "")
+    });
+    if (error) return { success: false, error };
+
+    const proposal = normalizeProposalRecord(data);
+    const proposals = getStoredProposals().filter(entry => String(entry.id) !== String(proposal.id));
+    saveStoredProposals([...proposals, proposal]);
     const jobs = getStoredJobs();
-    const jobIndex = jobs.findIndex(j => j.id === proposalData.jobId);
-    if (jobIndex !== -1) {
-        jobs[jobIndex].proposalsCount = (jobs[jobIndex].proposalsCount || 0) + 1;
+    const job = jobs.find(entry => String(entry.id) === String(proposal.jobId));
+    if (job) {
+        job.proposalsCount = Number(data.proposals_count ?? job.proposalsCount + 1);
         saveStoredJobs(jobs);
     }
+    return { success: true, proposal, error: null };
+}
+
+async function acceptProposalRecord(proposalId) {
+    await window.supabaseBootstrapPromise;
+    if (!window.isSupabaseConfigured?.()) {
+        return { success: false, error: new Error("Cloud contracts are not configured.") };
+    }
+
+    const { data, error } = await window.supabaseClient.rpc("accept_proposal", {
+        p_proposal_id: String(proposalId)
+    });
+    if (error) return { success: false, error };
+
+    const proposal = normalizeProposalRecord(data.proposal);
+    const project = normalizeProjectRecord(data.project);
+    saveStoredProposals(getStoredProposals().map(entry =>
+        String(entry.id) === String(proposal.id) ? proposal : entry
+    ));
+    saveStoredProjects([...getStoredProjects().filter(entry => String(entry.id) !== String(project.id)), project]);
+    return { success: true, proposal, project, error: null };
 }
 
 function getStoredProjects() {
     initMarketplaceData();
-    return JSON.parse(localStorage.getItem(STORAGE_KEYS.PROJECTS)) || [];
+    const projects = JSON.parse(localStorage.getItem(STORAGE_KEYS.PROJECTS)) || [];
+    return Array.isArray(projects) ? projects.map(normalizeProjectRecord) : [];
 }
 
 function saveStoredProjects(projects) {
-    localStorage.setItem(STORAGE_KEYS.PROJECTS, JSON.stringify(projects));
+    localStorage.setItem(STORAGE_KEYS.PROJECTS, JSON.stringify((projects || []).map(normalizeProjectRecord)));
 }
 
 function getStoredTransactions() {
     initMarketplaceData();
-    return JSON.parse(localStorage.getItem(STORAGE_KEYS.TRANSACTIONS)) || [];
+    const transactions = JSON.parse(localStorage.getItem(STORAGE_KEYS.TRANSACTIONS)) || [];
+    return Array.isArray(transactions) ? transactions.map(normalizeTransactionRecord) : [];
 }
 
 function saveStoredTransactions(transactions) {
-    localStorage.setItem(STORAGE_KEYS.TRANSACTIONS, JSON.stringify(transactions));
+    localStorage.setItem(STORAGE_KEYS.TRANSACTIONS, JSON.stringify((transactions || []).map(normalizeTransactionRecord)));
+}
+
+async function syncAccountWorkData(userId, role) {
+    await window.supabaseBootstrapPromise;
+    if (!window.isSupabaseConfigured?.() || !userId) return { success: false, reason: "Cloud account sync is unavailable." };
+
+    const session = (await window.supabaseClient.auth.getSession())?.data?.session;
+    if (!session?.user?.id || String(session.user.id) !== String(userId)) {
+        return { success: false, reason: "A current sign-in is required to sync account data." };
+    }
+
+    const jobsSync = await syncFromCloudDatabase();
+    if (!jobsSync.success) {
+        console.warn("[SkillLink Work] Job context refresh failed before account sync.", jobsSync.error || jobsSync.reason);
+    }
+
+    const isClient = role === "client";
+    const proposalOwnerColumn = isClient ? "client_id" : "freelancer_id";
+    const projectOwnerColumn = isClient ? "client_id" : "freelancer_id";
+    const [projectsResult, transactionsResult] = await Promise.all([
+        window.supabaseClient.from("projects").select("*", { [projectOwnerColumn]: String(userId) }),
+        window.supabaseClient.from("transactions").select("*", { user_id: String(userId) })
+    ]);
+    if (projectsResult.error) return { success: false, error: projectsResult.error };
+    if (transactionsResult.error) return { success: false, error: transactionsResult.error };
+
+    const currentUser = typeof getCurrentUser === "function" ? getCurrentUser() : null;
+    const counterpartIds = [...new Set((projectsResult.data || []).map(project => String(isClient ? project.freelancer_id : project.client_id)).filter(Boolean))];
+    const counterpartResults = await Promise.all(counterpartIds.map(id =>
+        window.supabaseClient.from("profiles").select("id,name,first_name,last_name,role", { id })
+    ));
+    const profileNames = new Map();
+    counterpartResults.forEach(result => {
+        const profile = result.data?.[0];
+        if (profile) {
+            profileNames.set(String(profile.id), profile.name || [profile.first_name, profile.last_name].filter(Boolean).join(" ") || profile.email || "User");
+        }
+    });
+    const syncedProjects = (projectsResult.data || []).map(project => {
+        const counterpartName = profileNames.get(String(isClient ? project.freelancer_id : project.client_id)) || "User";
+        const currentName = currentUser?.name || [currentUser?.firstName, currentUser?.lastName].filter(Boolean).join(" ") || "User";
+        return normalizeProjectRecord({
+            ...project,
+            client_name: isClient ? currentName : counterpartName,
+            freelancer_name: isClient ? counterpartName : currentName
+        });
+    });
+
+    let proposals = [];
+    let relevantJobIds = [];
+    if (isClient) {
+        const jobsResult = await window.supabaseClient.from("jobs").select("id,title,client_id", { client_id: String(userId) });
+        if (jobsResult.error) return { success: false, error: jobsResult.error };
+        const jobsById = new Map((jobsResult.data || []).map(job => [String(job.id), job]));
+        relevantJobIds = [...jobsById.keys()];
+        const proposalResults = await Promise.all(relevantJobIds.map(jobId =>
+            window.supabaseClient.from("proposals").select("*", { job_id: jobId })
+        ));
+        const failedProposalResult = proposalResults.find(result => result.error);
+        if (failedProposalResult) return { success: false, error: failedProposalResult.error };
+        proposals = proposalResults.flatMap(result => result.data || []).map(proposal => {
+            const job = jobsById.get(String(proposal.job_id));
+            return normalizeProposalRecord({ ...proposal, job_title: job?.title || "Job Proposal", client_id: userId });
+        });
+    } else {
+        const proposalsResult = await window.supabaseClient.from("proposals").select("*", { [proposalOwnerColumn]: String(userId) });
+        if (proposalsResult.error) return { success: false, error: proposalsResult.error };
+        const jobs = getStoredJobs();
+        const jobsById = new Map(jobs.map(job => [String(job.id), job]));
+        proposals = (proposalsResult.data || []).map(proposal => {
+            const job = jobsById.get(String(proposal.job_id));
+            return normalizeProposalRecord({ ...proposal, job_title: job?.title || "Job Proposal" });
+        });
+    }
+
+    const existingProposals = getStoredProposals().filter(proposal => {
+        if (isClient) return !relevantJobIds.includes(String(proposal.jobId));
+        return String(proposal.freelancerId) !== String(userId);
+    });
+    saveStoredProposals([...existingProposals, ...proposals]);
+
+    const existingProjects = getStoredProjects().filter(project => String(project[isClient ? "clientId" : "freelancerId"]) !== String(userId));
+    saveStoredProjects([...existingProjects, ...syncedProjects]);
+
+    const existingTransactions = getStoredTransactions().filter(transaction => String(transaction.userId) !== String(userId));
+    saveStoredTransactions([...existingTransactions, ...(transactionsResult.data || []).map(normalizeTransactionRecord)]);
+
+    return { success: true, proposalsCount: proposals.length, projectsCount: projectsResult.data.length, transactionsCount: transactionsResult.data.length };
 }
 
 function getStoredMessages() {
@@ -470,11 +657,14 @@ window.getStoredCategories = getStoredCategories;
 window.getSavedJobIds = getSavedJobIds;
 window.toggleSaveJob = toggleSaveJob;
 window.getStoredProposals = getStoredProposals;
-window.saveProposal = saveProposal;
+window.saveStoredProposals = saveStoredProposals;
+window.createProposalRecord = createProposalRecord;
+window.acceptProposalRecord = acceptProposalRecord;
 window.getStoredProjects = getStoredProjects;
 window.saveStoredProjects = saveStoredProjects;
 window.getStoredTransactions = getStoredTransactions;
 window.syncFromCloudDatabase = syncFromCloudDatabase;
+window.syncAccountWorkData = syncAccountWorkData;
 window.saveStoredTransactions = saveStoredTransactions;
 window.getStoredMessages = getStoredMessages;
 window.saveStoredMessages = saveStoredMessages;

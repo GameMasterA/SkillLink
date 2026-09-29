@@ -93,36 +93,7 @@
                     <p style="color: var(--text-muted); font-size: 0.9rem; margin-top: 2px;">Review cover letters, delivery timelines, and award contract escrows.</p>
                 </div>
 
-                <div style="display: flex; flex-direction: column; gap: 20px;" id="clientProposalsList">
-                    <div class="glass-card" style="padding: 28px; border-radius: var(--radius-lg);">
-                        <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 12px; margin-bottom: 14px;">
-                            <div>
-                                <span class="badge" style="margin-bottom: 8px;">SaaS Landing Portal Project</span>
-                                <h3 style="font-size: 1.25rem; font-weight: 700; color: var(--text-dark);">Applicant Name (Frontend Developer)</h3>
-                                <p style="font-size: 0.85rem; color: var(--text-muted); display:flex; align-items:center; gap:6px; margin-top:2px;">
-                                    <svg class="svg-icon" viewBox="0 0 24 24" style="width:14px; height:14px; fill:#f59e0b; stroke:#f59e0b;"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
-                                    <span>4.9 Rating</span> • <span>28 Completed Projects</span>
-                                </p>
-                            </div>
-                            <div style="text-align: right;">
-                                <span style="font-size: 1.25rem; font-weight: 800; color: var(--primary);">₦0</span>
-                                <p style="font-size: 0.8rem; color: var(--text-muted); margin-top:2px;">Delivery: 7 days</p>
-                            </div>
-                        </div>
-
-                        <p style="color: var(--text-dark); font-size: 0.95rem; line-height: 1.6; padding: 16px; background: rgba(255,255,255,0.45); border-radius: var(--radius-md); margin-bottom: 18px; border: 1px solid var(--glass-border-light);">
-                            "Hi Sarah! I have extensively worked with responsive liquid glass layouts and vanilla JavaScript. I can complete your SaaS landing portal within 7 days with pixel-perfect execution and escrow safety."
-                        </p>
-
-                        <div style="display: flex; gap: 12px; justify-content: flex-end;">
-                            <a href="messages.html" class="btn btn-outline btn-sm" style="gap:6px;">
-                                <svg class="svg-icon" viewBox="0 0 24 24" style="width:14px; height:14px;"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
-                                <span>Message Applicant</span>
-                            </a>
-                            <button onclick="if(typeof showToast==='function') showToast('Contract awarded! Escrow funded.', 'success');" class="btn btn-primary btn-sm">Accept & Fund Escrow</button>
-                        </div>
-                    </div>
-                </div>
+                <div id="clientProposalsList" style="display:flex; flex-direction:column; gap:20px;"></div>
             </main>
         </div>
     </div>
@@ -130,6 +101,7 @@
     <script src="../js/data.js"></script>
     <script src="../js/auth.js"></script>
     <script src="../js/main.js"></script>
+    <script src="../js/messages.js"></script>
     <script src="../js/dashboard.js"></script>
 </body>
 </html>

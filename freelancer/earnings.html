@@ -100,20 +100,20 @@
                 <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 24px; margin-bottom: 28px;">
                     <div class="glass-card" style="padding: 26px; border-radius: var(--radius-lg);">
                         <span style="font-size: 0.85rem; color: var(--text-muted); font-weight: 600;">Available Balance</span>
-                        <div style="font-size: 2.2rem; font-weight: 800; color: var(--primary); margin: 6px 0 16px;" id="statTotalEarnings">₦180,000</div>
-                        <button class="btn btn-primary btn-sm" onclick="openModal('withdrawModal')">Withdraw Funds</button>
+                        <div style="font-size: 2.2rem; font-weight: 800; color: var(--primary); margin: 6px 0 16px;" id="statAvailableBalance">₦0</div>
+                        <button class="btn btn-outline btn-sm" type="button" disabled title="Withdrawals are not available yet">Withdrawals unavailable</button>
                     </div>
 
                     <div class="glass-card" style="padding: 26px; border-radius: var(--radius-lg);">
                         <span style="font-size: 0.85rem; color: var(--text-muted); font-weight: 600;">In Escrow</span>
-                        <div style="font-size: 2.2rem; font-weight: 800; color: var(--text-dark); margin-top: 6px;">₦0</div>
-                        <span style="font-size: 0.75rem; color: var(--text-muted);">1 Active Project Contract</span>
+                        <div id="statEscrowBalance" style="font-size: 2.2rem; font-weight: 800; color: var(--text-dark); margin-top: 6px;">₦0</div>
+                        <span id="statEscrowCount" style="font-size: 0.75rem; color: var(--text-muted);">0 Active Contracts</span>
                     </div>
 
                     <div class="glass-card" style="padding: 26px; border-radius: var(--radius-lg);">
                         <span style="font-size: 0.85rem; color: var(--text-muted); font-weight: 600;">Total Withdrawn</span>
-                        <div style="font-size: 2.2rem; font-weight: 800; color: var(--text-dark); margin-top: 6px;">₦150,000</div>
-                        <span style="font-size: 0.75rem; color: var(--text-muted);">Processed via Bank Transfer</span>
+                        <div id="statTotalWithdrawn" style="font-size: 2.2rem; font-weight: 800; color: var(--text-dark); margin-top: 6px;">₦0</div>
+                        <span style="font-size: 0.75rem; color: var(--text-muted);">Completed withdrawals</span>
                     </div>
                 </div>
 
@@ -136,35 +136,6 @@
                     </div>
                 </div>
             </main>
-        </div>
-    </div>
-
-    <!-- Modal: Withdraw Funds (Level 3 Glass) -->
-    <div class="modal" id="withdrawModal">
-        <div class="modal-content glass-card">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
-                <h3 style="font-size: 1.25rem; font-weight: 800; color: var(--text-dark);">Withdraw Earnings</h3>
-                <button type="button" onclick="closeModal('withdrawModal')" style="background: none; border: none; cursor: pointer; display:flex; align-items:center;">
-                    <svg class="svg-icon" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
-                </button>
-            </div>
-            <form onsubmit="event.preventDefault(); if(typeof showToast==='function') showToast('Withdrawal request submitted!', 'success'); closeModal('withdrawModal');">
-                <div style="margin-bottom: 14px;">
-                    <label>Bank Account</label>
-                    <select style="width: 100%;">
-                        <option>Bank account — 0000000000 (Your Name)</option>
-                        <option>Secondary account — 0000000000 (Your Name)</option>
-                    </select>
-                </div>
-                <div style="margin-bottom: 20px;">
-                    <label>Amount (₦)</label>
-                    <input type="number" placeholder="50000" required style="width: 100%;">
-                </div>
-                <div style="display: flex; justify-content: flex-end; gap: 10px;">
-                    <button type="button" class="btn btn-outline" onclick="closeModal('withdrawModal')">Cancel</button>
-                    <button type="submit" class="btn btn-primary">Submit Withdrawal</button>
-                </div>
-            </form>
         </div>
     </div>
 

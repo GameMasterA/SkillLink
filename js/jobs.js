@@ -195,6 +195,12 @@ function initJobDetailsView() {
     const job = getStoredJobs().find(j => j.id === currentDetailJobId);
     if (!job) {
         card.innerHTML = "<h2>Job details not found</h2>";
+        if (currentDetailJobId && !card.dataset.cloudRefreshAttempted && typeof syncFromCloudDatabase === "function") {
+            card.dataset.cloudRefreshAttempted = "true";
+            syncFromCloudDatabase().then(result => {
+                if (result.success) initJobDetailsView();
+            });
+        }
         return;
     }
 
@@ -285,7 +291,7 @@ function closeProposalModal() {
     }
 }
 
-function handleProposalSubmit(e) {
+async function handleProposalSubmit(e) {
     e.preventDefault();
 
     if (!currentDetailJobId) return;
@@ -313,18 +319,24 @@ function handleProposalSubmit(e) {
         submittedDate: new Date().toISOString().split("T")[0]
     };
 
-    if (typeof addProposal === "function") {
-        addProposal(proposal);
-    } else {
-        const props = JSON.parse(localStorage.getItem("skillLinkProposals") || "[]");
-        props.push(proposal);
-        localStorage.setItem("skillLinkProposals", JSON.stringify(props));
+    const submitButton = e.currentTarget.querySelector('button[type="submit"]');
+    if (submitButton) submitButton.disabled = true;
+    const result = await createProposalRecord(proposal);
+    if (!result.success) {
+        if (submitButton) submitButton.disabled = false;
+        if (typeof showToast === "function") {
+            showToast(result.error?.message || "Unable to submit your proposal. Please sign in and try again.", "error");
+        }
+        return;
     }
 
     closeProposalModal();
     if (typeof showToast === "function") {
         showToast("Proposal submitted successfully!", "success");
     }
+    window.setTimeout(() => {
+        window.location.href = "freelancer/proposals.html";
+    }, 600);
 }
 
 /* Freelancers Directory & Profile View */

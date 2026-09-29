@@ -7,6 +7,16 @@ document.addEventListener("DOMContentLoaded", () => {
     initDashboardCore();
 });
 
+function escapeDashboardText(value = "") {
+    return String(value).replace(/[&<>"']/g, character => ({
+        "&": "&amp;",
+        "<": "&lt;",
+        ">": "&gt;",
+        '"': "&quot;",
+        "'": "&#39;"
+    })[character]);
+}
+
 function initDashboardCore() {
     setupSidebarToggle();
     renderUserData();
@@ -78,11 +88,20 @@ function initFreelancerDashboard() {
     renderFreelancerActiveProjects();
     renderFreelancerProposalsTable();
     renderFreelancerEarningsSummary();
+    if (typeof syncAccountWorkData === "function") {
+        syncAccountWorkData(getCurrentUser()?.id, "freelancer").then(result => {
+            if (result.success) {
+                renderFreelancerStats();
+                renderFreelancerActiveProjects();
+                renderFreelancerProposalsTable();
+                renderFreelancerEarningsSummary();
+            }
+        });
+    }
 }
 
 function renderFreelancerStats() {
     const user = typeof getCurrentUser === "function" ? getCurrentUser() : null;
-    const isNew = !!user && (user.isNewAccount || !String(user.id || "").startsWith("usr-demo"));
     const userId = user ? user.id : null;
 
     if (!userId) {
@@ -100,32 +119,35 @@ function renderFreelancerStats() {
     const proposals = typeof getStoredProposals === "function" ? getStoredProposals() : [];
     const transactions = typeof getStoredTransactions === "function" ? getStoredTransactions() : [];
 
-    const activeProjects = projects.filter(p => p.freelancerId === userId && p.status === "active");
+    const activeProjects = projects.filter(p => String(p.freelancerId) === String(userId) && ["pending", "in_progress", "review", "active"].includes(p.status));
     const completedProjects = projects.filter(p => p.freelancerId === userId && p.status === "completed");
-    const myProposals = proposals.filter(p => p.freelancerId === userId);
-
-    let totalEarnings = 0;
-    if (!isNew) {
-        totalEarnings = transactions
-            .filter(t => t.userId === userId && t.type === "earning" && t.status === "completed")
-            .reduce((sum, t) => sum + Number(t.amount || 0), 180000);
-    } else {
-        totalEarnings = transactions
-            .filter(t => t.userId === userId && t.type === "earning" && t.status === "completed")
-            .reduce((sum, t) => sum + Number(t.amount || 0), 0);
-    }
+    const myProposals = proposals.filter(p => String(p.freelancerId) === String(userId));
+    const totalEarnings = transactions
+        .filter(t => String(t.userId) === String(userId) && ["payment", "escrow_release"].includes(t.type) && t.status === "completed")
+        .reduce((sum, t) => sum + Number(t.amount || 0), 0);
+    const totalWithdrawn = transactions
+        .filter(t => String(t.userId) === String(userId) && t.type === "withdrawal" && t.status === "completed")
+        .reduce((sum, t) => sum + Number(t.amount || 0), 0);
+    const escrowBalance = transactions
+        .filter(t => String(t.userId) === String(userId) && t.type === "escrow_hold" && t.status === "completed")
+        .reduce((sum, t) => sum + Number(t.amount || 0), 0) - transactions
+        .filter(t => String(t.userId) === String(userId) && t.type === "escrow_release" && t.status === "completed")
+        .reduce((sum, t) => sum + Number(t.amount || 0), 0);
 
     const elemEarnings = document.getElementById("statTotalEarnings");
     if (elemEarnings) elemEarnings.textContent = typeof formatCurrency === "function" ? formatCurrency(totalEarnings) : `₦${totalEarnings.toLocaleString()}`;
+    const availableBalanceElement = document.getElementById("statAvailableBalance");
+    const availableBalance = Math.max(0, totalEarnings - totalWithdrawn - Math.max(0, escrowBalance));
+    if (availableBalanceElement) availableBalanceElement.textContent = typeof formatCurrency === "function" ? formatCurrency(availableBalance) : `₦${availableBalance.toLocaleString()}`;
 
     const elemActive = document.getElementById("statActiveProjects");
-    if (elemActive) elemActive.textContent = isNew ? activeProjects.length : (activeProjects.length || 1);
+    if (elemActive) elemActive.textContent = activeProjects.length;
 
     const elemProp = document.getElementById("statSubmittedProposals");
-    if (elemProp) elemProp.textContent = isNew ? myProposals.length : (myProposals.length || 1);
+    if (elemProp) elemProp.textContent = myProposals.length;
 
     const elemComp = document.getElementById("statCompletedJobs");
-    if (elemComp) elemComp.textContent = isNew ? completedProjects.length : (completedProjects.length + (user?.completedJobs || 28));
+    if (elemComp) elemComp.textContent = completedProjects.length;
 }
 
 function renderFreelancerActiveProjects() {
@@ -133,7 +155,6 @@ function renderFreelancerActiveProjects() {
     if (!container) return;
 
     const user = typeof getCurrentUser === "function" ? getCurrentUser() : null;
-    const isNew = !!user && (user.isNewAccount || !String(user.id || "").startsWith("usr-demo"));
     const userId = user ? user.id : null;
 
     if (!userId) {
@@ -150,9 +171,7 @@ function renderFreelancerActiveProjects() {
     }
 
     const projects = typeof getStoredProjects === "function" ? getStoredProjects() : [];
-    const active = isNew 
-        ? projects.filter(p => p.freelancerId === userId && p.status === "active")
-        : projects.filter(p => p.status === "active");
+    const active = projects.filter(project => String(project.freelancerId) === String(userId) && ["pending", "in_progress", "review", "active"].includes(project.status));
 
     if (active.length === 0) {
         container.innerHTML = `
@@ -195,7 +214,6 @@ function renderFreelancerProposalsTable() {
     if (!container) return;
 
     const user = typeof getCurrentUser === "function" ? getCurrentUser() : null;
-    const isNew = !!user && (user.isNewAccount || !String(user.id || "").startsWith("usr-demo"));
     const userId = user ? user.id : null;
 
     if (!userId) {
@@ -204,9 +222,7 @@ function renderFreelancerProposalsTable() {
     }
 
     const proposals = typeof getStoredProposals === "function" ? getStoredProposals() : [];
-    const myProposals = isNew 
-        ? proposals.filter(p => p.freelancerId === userId)
-        : proposals;
+    const myProposals = proposals.filter(proposal => String(proposal.freelancerId) === String(userId));
 
     if (myProposals.length === 0) {
         container.innerHTML = `<tr><td colspan="5" style="text-align:center; padding:24px; color:var(--text-muted);">No proposals submitted yet. <a href="../jobs.html" style="color:var(--primary); font-weight:600; text-decoration:none;">Find projects to apply</a></td></tr>`;
@@ -215,11 +231,11 @@ function renderFreelancerProposalsTable() {
 
     container.innerHTML = myProposals.map(p => `
         <tr>
-            <td><strong>${p.jobTitle || 'Job Proposal'}</strong></td>
-            <td>${p.clientName || 'Client'}</td>
-            <td style="font-weight:700; color:var(--primary);">${typeof formatCurrency === "function" ? formatCurrency(p.bidAmount || p.price) : '₦' + (p.bidAmount || p.price)}</td>
-            <td><span class="status-indicator">${p.status || 'Pending'}</span></td>
-            <td><button onclick="if(typeof showToast === 'function') showToast('Proposal details opened', 'info')" class="btn btn-outline btn-sm">View</button></td>
+            <td><strong>${escapeDashboardText(p.jobTitle || 'Job Proposal')}</strong></td>
+            <td>${escapeDashboardText(p.clientName || 'Client')}</td>
+            <td style="font-weight:700; color:var(--primary);">${typeof formatCurrency === "function" ? formatCurrency(p.bidAmount) : '₦' + Number(p.bidAmount || 0).toLocaleString()}</td>
+            <td><span class="status-indicator">${escapeDashboardText(p.status || 'Pending')}</span></td>
+            <td><a href="../job-details.html?id=${encodeURIComponent(p.jobId)}" class="btn btn-outline btn-sm">View Job</a></td>
         </tr>
     `).join("");
 }
@@ -229,7 +245,6 @@ function renderFreelancerEarningsSummary() {
     if (!table) return;
 
     const user = typeof getCurrentUser === "function" ? getCurrentUser() : null;
-    const isNew = !!user && (user.isNewAccount || !String(user.id || "").startsWith("usr-demo"));
     const userId = user ? user.id : null;
 
     if (!userId) {
@@ -238,9 +253,21 @@ function renderFreelancerEarningsSummary() {
     }
 
     const transactions = typeof getStoredTransactions === "function" ? getStoredTransactions() : [];
-    const myTransactions = isNew 
-        ? transactions.filter(t => t.userId === userId)
-        : transactions;
+    const myTransactions = transactions.filter(transaction => String(transaction.userId) === String(userId));
+    const completedWithdrawals = myTransactions
+        .filter(transaction => transaction.type === "withdrawal" && transaction.status === "completed")
+        .reduce((sum, transaction) => sum + Number(transaction.amount || 0), 0);
+    const activeEscrow = myTransactions
+        .filter(transaction => transaction.type === "escrow_hold" && transaction.status === "completed")
+        .reduce((sum, transaction) => sum + Number(transaction.amount || 0), 0) - myTransactions
+        .filter(transaction => transaction.type === "escrow_release" && transaction.status === "completed")
+        .reduce((sum, transaction) => sum + Number(transaction.amount || 0), 0);
+    const withdrawnElement = document.getElementById("statTotalWithdrawn");
+    if (withdrawnElement) withdrawnElement.textContent = typeof formatCurrency === "function" ? formatCurrency(completedWithdrawals) : `₦${completedWithdrawals.toLocaleString()}`;
+    const escrowElement = document.getElementById("statEscrowBalance");
+    if (escrowElement) escrowElement.textContent = typeof formatCurrency === "function" ? formatCurrency(Math.max(0, activeEscrow)) : `₦${Math.max(0, activeEscrow).toLocaleString()}`;
+    const escrowCountElement = document.getElementById("statEscrowCount");
+    if (escrowCountElement) escrowCountElement.textContent = `${getStoredProjects().filter(project => String(project.freelancerId) === String(userId) && ["pending", "in_progress", "review", "active"].includes(project.status)).length} Active Contracts`;
 
     if (myTransactions.length === 0) {
         table.innerHTML = `<tr><td colspan="5" style="text-align:center; padding:24px; color:var(--text-muted);">No financial transactions yet. Your completed milestone payments will appear here.</td></tr>`;
@@ -249,11 +276,11 @@ function renderFreelancerEarningsSummary() {
 
     table.innerHTML = myTransactions.map(t => `
         <tr>
-            <td><strong>${t.title}</strong></td>
-            <td><span class="status-indicator">${t.type.toUpperCase()}</span></td>
-            <td>${t.date}</td>
-            <td style="font-weight:700; color:${t.type === 'earning' ? 'var(--accent-emerald)' : 'var(--text-dark)'};">${typeof formatCurrency === "function" ? formatCurrency(t.amount) : '₦' + t.amount}</td>
-            <td><span class="status-indicator">${t.status}</span></td>
+            <td><strong>${escapeDashboardText(t.title)}</strong></td>
+            <td><span class="status-indicator">${escapeDashboardText(t.type.toUpperCase())}</span></td>
+            <td>${escapeDashboardText(t.date)}</td>
+            <td style="font-weight:700; color:${["payment", "escrow_release"].includes(t.type) ? 'var(--accent-emerald)' : 'var(--text-dark)'};">${typeof formatCurrency === "function" ? formatCurrency(t.amount) : '₦' + t.amount}</td>
+            <td><span class="status-indicator">${escapeDashboardText(t.status)}</span></td>
         </tr>
     `).join("");
 }
@@ -271,12 +298,17 @@ function initClientDashboard() {
 
     renderClientStats();
     renderClientJobsTable();
+    renderClientProposalsList();
+    renderClientProjectsList();
     setupPostJobForm();
-    if (typeof syncFromCloudDatabase === "function") {
-        syncFromCloudDatabase().then(result => {
+    const user = typeof getCurrentUser === "function" ? getCurrentUser() : null;
+    if (user?.id && typeof syncAccountWorkData === "function") {
+        syncAccountWorkData(user.id, "client").then(result => {
             if (result.success) {
                 renderClientStats();
                 renderClientJobsTable();
+                renderClientProposalsList();
+                renderClientProjectsList();
             }
         });
     }
@@ -284,7 +316,6 @@ function initClientDashboard() {
 
 function renderClientStats() {
     const user = typeof getCurrentUser === "function" ? getCurrentUser() : null;
-    const isNew = !!user && (user.isNewAccount || !String(user.id || "").startsWith("usr-demo"));
     const userId = user ? user.id : null;
 
     if (!userId) {
@@ -302,13 +333,10 @@ function renderClientStats() {
     const proposals = typeof getStoredProposals === "function" ? getStoredProposals() : [];
     const projects = typeof getStoredProjects === "function" ? getStoredProjects() : [];
 
-    const myJobs = isNew 
-        ? jobs.filter(j => j.clientId === userId)
-        : jobs.filter(j => j.clientId === userId || j.clientId === "local-client");
-
-    const myProjects = isNew
-        ? projects.filter(p => p.clientId === userId)
-        : projects.filter(p => p.clientId === userId || p.clientId === "local-client");
+    const myJobs = jobs.filter(job => String(job.clientId) === String(userId));
+    const myJobIds = new Set(myJobs.map(job => String(job.id)));
+    const myProposals = proposals.filter(proposal => myJobIds.has(String(proposal.jobId)));
+    const myProjects = projects.filter(project => String(project.clientId) === String(userId));
 
     const openJobs = myJobs.filter(j => j.status === "open");
 
@@ -319,10 +347,97 @@ function renderClientStats() {
     if (elemOpen) elemOpen.textContent = openJobs.length;
 
     const elemProj = document.getElementById("clientStatActiveProjects");
-    if (elemProj) elemProj.textContent = isNew ? myProjects.filter(p => p.status === "active").length : (myProjects.filter(p => p.status === "active").length || 1);
+    if (elemProj) elemProj.textContent = myProjects.filter(project => ["pending", "in_progress", "review", "active"].includes(project.status)).length;
 
     const elemProp = document.getElementById("clientStatProposalsReceived");
-    if (elemProp) elemProp.textContent = isNew ? 0 : (proposals.length || 8);
+    if (elemProp) elemProp.textContent = myProposals.length;
+}
+
+function renderClientProposalsList() {
+    const container = document.getElementById("clientProposalsList");
+    if (!container) return;
+
+    const user = typeof getCurrentUser === "function" ? getCurrentUser() : null;
+    const ownedJobs = getStoredJobs().filter(job => String(job.clientId) === String(user?.id));
+    const jobsById = new Map(ownedJobs.map(job => [String(job.id), job]));
+    const proposals = getStoredProposals().filter(proposal => jobsById.has(String(proposal.jobId)));
+
+    if (!proposals.length) {
+        container.innerHTML = `<div class="glass-card" style="padding:28px; text-align:center; border-radius:var(--radius-lg);">No proposals received yet. New applications for your jobs will appear here.</div>`;
+        return;
+    }
+
+    container.innerHTML = proposals.map(proposal => {
+        const job = jobsById.get(String(proposal.jobId));
+        const status = String(proposal.status || "pending").toLowerCase();
+        const canHire = status === "pending" && job?.status === "open";
+        return `
+            <article class="glass-card" style="padding:24px; border-radius:var(--radius-lg);">
+                <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:16px; flex-wrap:wrap;">
+                    <div>
+                        <span class="badge">${escapeDashboardText(job?.title || proposal.jobTitle)}</span>
+                        <h3 style="margin-top:10px;">${escapeDashboardText(proposal.freelancerName)}</h3>
+                        <span class="status-indicator">${escapeDashboardText(status)}</span>
+                    </div>
+                    <div style="text-align:right;">
+                        <strong>${typeof formatCurrency === "function" ? formatCurrency(proposal.bidAmount) : `₦${Number(proposal.bidAmount || 0).toLocaleString()}`}</strong>
+                        <p>Delivery: ${escapeDashboardText(proposal.estimatedDuration)}</p>
+                    </div>
+                </div>
+                <p style="white-space:pre-wrap; margin:18px 0;">${escapeDashboardText(proposal.coverLetter)}</p>
+                <div style="display:flex; justify-content:flex-end; gap:10px; flex-wrap:wrap;">
+                    <button type="button" class="btn btn-outline btn-sm" data-message-user="${escapeDashboardText(proposal.freelancerId)}" data-message-name="${escapeDashboardText(proposal.freelancerName)}">Message Applicant</button>
+                    ${canHire ? `<button type="button" class="btn btn-primary btn-sm" data-accept-proposal="${escapeDashboardText(proposal.id)}">Hire Freelancer</button>` : ""}
+                </div>
+            </article>
+        `;
+    }).join("");
+
+    container.querySelectorAll("[data-message-user]").forEach(button => {
+        button.addEventListener("click", () => window.openConversationWithUser?.(button.dataset.messageUser, button.dataset.messageName));
+    });
+    container.querySelectorAll("[data-accept-proposal]").forEach(button => {
+        button.addEventListener("click", () => acceptProposalFromClient(button.dataset.acceptProposal, button));
+    });
+}
+
+async function acceptProposalFromClient(proposalId, button) {
+    if (button) button.disabled = true;
+    const result = await acceptProposalRecord(proposalId);
+    if (!result.success) {
+        if (button) button.disabled = false;
+        if (typeof showToast === "function") showToast(result.error?.message || "Unable to hire this freelancer.", "error");
+        return;
+    }
+
+    if (typeof showToast === "function") showToast("Freelancer hired and contract created.", "success");
+    const user = typeof getCurrentUser === "function" ? getCurrentUser() : null;
+    await syncAccountWorkData(user?.id, "client");
+    renderClientStats();
+    renderClientProposalsList();
+    renderClientProjectsList();
+    renderClientJobsTable();
+}
+
+function renderClientProjectsList() {
+    const container = document.getElementById("clientProjectsList");
+    if (!container) return;
+
+    const user = typeof getCurrentUser === "function" ? getCurrentUser() : null;
+    const projects = getStoredProjects().filter(project => String(project.clientId) === String(user?.id));
+    if (!projects.length) {
+        container.innerHTML = `<div class="glass-card" style="padding:28px; text-align:center; border-radius:var(--radius-lg);">No contracts yet. Hire a freelancer from a received proposal to create a contract.</div>`;
+        return;
+    }
+
+    container.innerHTML = projects.map(project => `
+        <article class="glass-card" style="padding:22px; border-radius:var(--radius-lg); margin-bottom:16px;">
+            <div style="display:flex; justify-content:space-between; gap:12px; flex-wrap:wrap;">
+                <div><h3>${escapeDashboardText(project.jobTitle)}</h3><p>Freelancer: ${escapeDashboardText(project.freelancerName)}</p></div>
+                <div><strong>${typeof formatCurrency === "function" ? formatCurrency(project.amount) : `₦${Number(project.amount || 0).toLocaleString()}`}</strong><p class="status-indicator">${escapeDashboardText(project.status.replaceAll("_", " "))}</p></div>
+            </div>
+        </article>
+    `).join("");
 }
 
 function renderClientJobsTable() {
@@ -330,7 +445,6 @@ function renderClientJobsTable() {
     if (!table) return;
 
     const user = typeof getCurrentUser === "function" ? getCurrentUser() : null;
-    const isNew = !!user && (user.isNewAccount || !String(user.id || "").startsWith("usr-demo"));
     const userId = user ? user.id : null;
 
     if (!userId) {
@@ -339,9 +453,7 @@ function renderClientJobsTable() {
     }
 
     const jobs = typeof getStoredJobs === "function" ? getStoredJobs() : [];
-    const myJobs = isNew 
-        ? jobs.filter(j => String(j.clientId || j.client_id) === String(userId))
-        : jobs.filter(j => String(j.clientId || j.client_id) === "local-client" || String(j.clientId || j.client_id) === String(userId));
+    const myJobs = jobs.filter(job => String(job.clientId || job.client_id) === String(userId));
 
     if (myJobs.length === 0) {
         table.innerHTML = `<tr><td colspan="6" style="text-align:center; padding:24px; color:var(--text-muted);">No jobs posted yet. <a href="post-job.html" style="color:var(--primary); font-weight:600; text-decoration:none;">Post your first job offer</a></td></tr>`;
