@@ -427,3 +427,96 @@ html, body {
     padding: 10px 16px;
   }
 }
+
+@media (max-width: 768px) {
+  body#clientDashboardRoot #chatInterfaceContainer,
+  body#freelancerDashboardRoot #chatInterfaceContainer {
+    grid-template-columns: minmax(0, 1fr) !important;
+    grid-template-rows: minmax(0, 1fr);
+    height: calc(100vh - 82px) !important;
+    height: calc(100dvh - 82px) !important;
+    min-height: 320px;
+    width: 100%;
+    padding: 0 !important;
+    border-radius: 14px !important;
+  }
+
+  body#clientDashboardRoot .main-wrapper > main,
+  body#freelancerDashboardRoot .main-wrapper > main {
+    padding: 12px !important;
+  }
+
+  #chatInterfaceContainer > div:first-child,
+  #chatInterfaceContainer > div:last-child {
+    grid-column: 1;
+    min-width: 0;
+    min-height: 0;
+    width: 100%;
+  }
+
+  #chatInterfaceContainer > div:last-child {
+    display: none !important;
+  }
+
+  #chatInterfaceContainer.mobile-chat-open > div:first-child {
+    display: none !important;
+  }
+
+  #chatInterfaceContainer.mobile-chat-open > div:last-child {
+    display: flex !important;
+  }
+
+  #chatInterfaceContainer > div:last-child > div:first-child {
+    padding: 10px 12px !important;
+  }
+
+  .chat-back-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex: 0 0 40px;
+    width: 40px;
+    height: 40px;
+    padding: 0;
+    border: 0;
+    border-radius: 50%;
+    background: transparent;
+    color: var(--text-dark);
+    cursor: pointer;
+  }
+
+  .chat-back-button .svg-icon {
+    width: 22px;
+    height: 22px;
+  }
+
+  #chatMessagesBody {
+    min-height: 0;
+    padding: 14px !important;
+  }
+
+  #sendMessageForm {
+    flex: 0 0 auto;
+    gap: 8px !important;
+    padding: 10px !important;
+    padding-bottom: max(10px, env(safe-area-inset-bottom)) !important;
+  }
+
+  #chatInput {
+    min-width: 0;
+    min-height: 44px;
+    font-size: 16px;
+  }
+
+  #sendMessageForm button[type="submit"] {
+    flex: 0 0 auto;
+    min-height: 44px;
+    padding: 10px 14px !important;
+  }
+}
+
+@media (min-width: 769px) {
+  .chat-back-button {
+    display: none;
+  }
+}

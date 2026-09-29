@@ -419,8 +419,14 @@ function initMessagingEngine() {
     const params = new URLSearchParams(window.location.search || "");
     const queryConversation = params.get("conversation");
     const currentUser = getActiveUser();
+    const backButton = document.getElementById("backToConversations");
+    if (backButton) {
+        backButton.addEventListener("click", showConversationListView);
+    }
+
     if (queryConversation) {
         activeConversationId = queryConversation;
+        if (isMobileMessagesView()) chatContainer.classList.add("mobile-chat-open");
         const targetConversation = getStoredMessages().find(entry => entry.conversationId === queryConversation);
         if (targetConversation && currentUser) {
             markLocalConversationRead(targetConversation, currentUser.id);
@@ -428,7 +434,7 @@ function initMessagingEngine() {
         }
     }
 
-    if (!activeConversationId && currentUser) {
+    if (!activeConversationId && currentUser && !isMobileMessagesView()) {
         const firstConversation = getStoredMessages().find(entry =>
             Array.isArray(entry.participants) && entry.participants.some(participant => String(participant.id) === String(currentUser.id))
         );
@@ -460,6 +466,14 @@ function getActiveUser() {
     } catch (error) {
         return null;
     }
+}
+
+function isMobileMessagesView() {
+    return typeof window.matchMedia === "function" && window.matchMedia("(max-width: 768px)").matches;
+}
+
+function showConversationListView() {
+    document.getElementById("chatInterfaceContainer")?.classList.remove("mobile-chat-open");
 }
 
 function renderConversationList() {
@@ -520,6 +534,9 @@ function renderConversationList() {
 
 function selectConversation(convId) {
     activeConversationId = convId;
+    if (isMobileMessagesView()) {
+        document.getElementById("chatInterfaceContainer")?.classList.add("mobile-chat-open");
+    }
     const conversations = typeof getStoredMessages === "function" ? getStoredMessages() : [];
     const activeUser = getActiveUser();
     const conversation = conversations.find(entry => entry.conversationId === convId);
@@ -654,3 +671,4 @@ window.selectConversation = selectConversation;
 window.renderConversationList = renderConversationList;
 window.openConversationWithUser = openConversationWithUser;
 window.refreshConversationMessages = refreshConversationMessages;
+window.showConversationListView = showConversationListView;
