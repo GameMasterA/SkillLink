@@ -82,8 +82,19 @@ function initFreelancerDashboard() {
 
 function renderFreelancerStats() {
     const user = typeof getCurrentUser === "function" ? getCurrentUser() : null;
-    const isNew = user?.isNewAccount || (!user?.id.startsWith("usr-demo"));
-    const userId = user ? user.id : "usr-demo-fl";
+    const isNew = !!user && (user.isNewAccount || !String(user.id || "").startsWith("usr-demo"));
+    const userId = user ? user.id : null;
+
+    if (!userId) {
+        const zeroElems = [
+            document.getElementById("statTotalEarnings"),
+            document.getElementById("statActiveProjects"),
+            document.getElementById("statSubmittedProposals"),
+            document.getElementById("statCompletedJobs")
+        ];
+        zeroElems.forEach(el => { if (el) el.textContent = "₦0"; });
+        return;
+    }
 
     const projects = typeof getStoredProjects === "function" ? getStoredProjects() : [];
     const proposals = typeof getStoredProposals === "function" ? getStoredProposals() : [];
@@ -122,8 +133,21 @@ function renderFreelancerActiveProjects() {
     if (!container) return;
 
     const user = typeof getCurrentUser === "function" ? getCurrentUser() : null;
-    const isNew = user?.isNewAccount || (!user?.id.startsWith("usr-demo"));
-    const userId = user ? user.id : "usr-demo-fl";
+    const isNew = !!user && (user.isNewAccount || !String(user.id || "").startsWith("usr-demo"));
+    const userId = user ? user.id : null;
+
+    if (!userId) {
+        container.innerHTML = `
+            <div class="glass-card" style="padding: 28px; text-align: center; border-radius: var(--radius-lg);">
+                <div style="width: 48px; height: 48px; border-radius: 50%; background: rgba(2,132,199,0.1); color: var(--primary); display: flex; align-items: center; justify-content: center; margin: 0 auto 12px;">
+                    <svg class="svg-icon" viewBox="0 0 24 24"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path></svg>
+                </div>
+                <h4 style="font-size: 1rem; font-weight: 700; color: var(--text-dark); margin-bottom: 4px;">No active contracts yet</h4>
+                <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 16px;">Sign in to view your active work, or explore open projects to get started.</p>
+            </div>
+        `;
+        return;
+    }
 
     const projects = typeof getStoredProjects === "function" ? getStoredProjects() : [];
     const active = isNew 
@@ -171,8 +195,13 @@ function renderFreelancerProposalsTable() {
     if (!container) return;
 
     const user = typeof getCurrentUser === "function" ? getCurrentUser() : null;
-    const isNew = user?.isNewAccount || (!user?.id.startsWith("usr-demo"));
-    const userId = user ? user.id : "usr-demo-fl";
+    const isNew = !!user && (user.isNewAccount || !String(user.id || "").startsWith("usr-demo"));
+    const userId = user ? user.id : null;
+
+    if (!userId) {
+        container.innerHTML = `<tr><td colspan="5" style="text-align:center; padding:24px; color:var(--text-muted);">No proposals submitted yet.</td></tr>`;
+        return;
+    }
 
     const proposals = typeof getStoredProposals === "function" ? getStoredProposals() : [];
     const myProposals = isNew 
@@ -200,8 +229,13 @@ function renderFreelancerEarningsSummary() {
     if (!table) return;
 
     const user = typeof getCurrentUser === "function" ? getCurrentUser() : null;
-    const isNew = user?.isNewAccount || (!user?.id.startsWith("usr-demo"));
-    const userId = user ? user.id : "usr-demo-fl";
+    const isNew = !!user && (user.isNewAccount || !String(user.id || "").startsWith("usr-demo"));
+    const userId = user ? user.id : null;
+
+    if (!userId) {
+        table.innerHTML = `<tr><td colspan="5" style="text-align:center; padding:24px; color:var(--text-muted);">No financial transactions yet.</td></tr>`;
+        return;
+    }
 
     const transactions = typeof getStoredTransactions === "function" ? getStoredTransactions() : [];
     const myTransactions = isNew 
@@ -242,8 +276,19 @@ function initClientDashboard() {
 
 function renderClientStats() {
     const user = typeof getCurrentUser === "function" ? getCurrentUser() : null;
-    const isNew = user?.isNewAccount || (!user?.id.startsWith("usr-demo"));
-    const userId = user ? user.id : "usr-demo-cl";
+    const isNew = !!user && (user.isNewAccount || !String(user.id || "").startsWith("usr-demo"));
+    const userId = user ? user.id : null;
+
+    if (!userId) {
+        const zeroFields = [
+            document.getElementById("clientStatJobsPosted"),
+            document.getElementById("clientStatOpenJobs"),
+            document.getElementById("clientStatActiveProjects"),
+            document.getElementById("clientStatProposalsReceived")
+        ];
+        zeroFields.forEach(el => { if (el) el.textContent = "0"; });
+        return;
+    }
 
     const jobs = typeof getStoredJobs === "function" ? getStoredJobs() : [];
     const proposals = typeof getStoredProposals === "function" ? getStoredProposals() : [];
@@ -251,11 +296,11 @@ function renderClientStats() {
 
     const myJobs = isNew 
         ? jobs.filter(j => j.clientId === userId)
-        : jobs.filter(j => j.clientId === userId || j.clientId === "usr-demo-cl");
+        : jobs.filter(j => j.clientId === userId || j.clientId === "local-client");
 
     const myProjects = isNew
         ? projects.filter(p => p.clientId === userId)
-        : projects.filter(p => p.clientId === userId || p.clientId === "usr-demo-cl");
+        : projects.filter(p => p.clientId === userId || p.clientId === "local-client");
 
     const openJobs = myJobs.filter(j => j.status === "open");
 
@@ -277,13 +322,18 @@ function renderClientJobsTable() {
     if (!table) return;
 
     const user = typeof getCurrentUser === "function" ? getCurrentUser() : null;
-    const isNew = user?.isNewAccount || (!user?.id.startsWith("usr-demo"));
-    const userId = user ? user.id : "usr-demo-cl";
+    const isNew = !!user && (user.isNewAccount || !String(user.id || "").startsWith("usr-demo"));
+    const userId = user ? user.id : null;
+
+    if (!userId) {
+        table.innerHTML = `<tr><td colspan="6" style="text-align:center; padding:24px; color:var(--text-muted);">No jobs posted yet.</td></tr>`;
+        return;
+    }
 
     const jobs = typeof getStoredJobs === "function" ? getStoredJobs() : [];
     const myJobs = isNew 
         ? jobs.filter(j => String(j.clientId || j.client_id) === String(userId))
-        : jobs.filter(j => String(j.clientId || j.client_id) === "usr-demo-cl" || String(j.clientId || j.client_id) === String(userId));
+        : jobs.filter(j => String(j.clientId || j.client_id) === "local-client" || String(j.clientId || j.client_id) === String(userId));
 
     if (myJobs.length === 0) {
         table.innerHTML = `<tr><td colspan="6" style="text-align:center; padding:24px; color:var(--text-muted);">No jobs posted yet. <a href="post-job.html" style="color:var(--primary); font-weight:600; text-decoration:none;">Post your first job offer</a></td></tr>`;
@@ -347,7 +397,7 @@ function setupPostJobForm() {
             return;
         }
 
-        const normalizedUser = user || { id: "usr-demo-cl", name: "Sarah Miller" };
+        const normalizedUser = user || { id: "local-client", name: "Client" };
         const jobPayload = {
             id: editJobId || `job-${Date.now()}`,
             title,

@@ -278,9 +278,18 @@ function closeProposalModal() {
 function handleProposalSubmit(e) {
     e.preventDefault();
 
+    if (!currentDetailJobId) return;
+
     const activeUser = typeof getCurrentUser === "function" ? getCurrentUser() : JSON.parse(localStorage.getItem("skillLinkUser"));
-    const currentUserId = activeUser?.id || "usr-demo-fl";
-    const currentUserName = activeUser?.name || "John Doe";
+    if (!activeUser || !activeUser.id) {
+        if (typeof showToast === "function") {
+            showToast("Please sign in before submitting a proposal.", "error");
+        }
+        return;
+    }
+
+    const currentUserId = activeUser.id;
+    const currentUserName = activeUser.name || [activeUser.firstName, activeUser.lastName].filter(Boolean).join(" ") || "User";
 
     const proposal = {
         id: "prop-" + Date.now(),
@@ -314,6 +323,10 @@ function initFreelancersMarketplace() {
     if (!list) return;
 
     const freelancers = typeof getStoredFreelancers === "function" ? getStoredFreelancers() : [];
+    const escapeForJs = (value = "") => String(value)
+        .replace(/\\/g, "\\\\")
+        .replace(/'/g, "\\'")
+        .replace(/\"/g, '\\"');
     
     list.innerHTML = freelancers.map(fl => `
         <div class="glass-card" style="padding: 28px; text-align: center;">
@@ -333,9 +346,25 @@ function initFreelancersMarketplace() {
                 <span>${fl.completedJobs || 12} projects</span>
             </div>
 
+            <button type="button" class="btn btn-primary btn-sm" onclick="openConversationWithUser('${escapeForJs(fl.id)}', '${escapeForJs(fl.name)}')" style="width: 100%; margin-bottom: 10px;">Message</button>
             <a href="freelancer-profile.html?id=${fl.id}" class="btn btn-outline btn-sm" style="width: 100%;">View Profile</a>
         </div>
     `).join("");
+}
+
+function renderFreelancerMessageActions(fl) {
+    if (!fl) return "";
+    const escapeForJs = (value = "") => String(value)
+        .replace(/\\/g, "\\\\")
+        .replace(/'/g, "\\'")
+        .replace(/\"/g, '\\"');
+
+    return `
+        <div style="margin-top: 24px; display:flex; flex-wrap:wrap; gap:12px;">
+            <button type="button" class="btn btn-primary" onclick="openConversationWithUser('${escapeForJs(fl.id)}', '${escapeForJs(fl.name)}')">Message ${escapeForJs(fl.name || "Freelancer")}</button>
+            <a href="freelancers.html" class="btn btn-outline">Back to Directory</a>
+        </div>
+    `;
 }
 
 function initFreelancerProfileView() {
@@ -375,5 +404,7 @@ function initFreelancerProfileView() {
                 ${(fl.skills || ["JavaScript", "HTML/CSS", "UI Design"]).map(s => `<span class="skill-tag">${s}</span>`).join("")}
             </div>
         </div>
+
+        ${renderFreelancerMessageActions(fl)}
     `;
 }

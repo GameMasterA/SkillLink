@@ -39,240 +39,19 @@ const STORAGE_KEYS = {
     CATEGORIES: "skillLinkCategories"
 };
 
-const SEED_CATEGORIES = [
-    { id: "cat-1", name: "Web Development", count: 124, icon: "💻" },
-    { id: "cat-2", name: "UI/UX Design", count: 86, icon: "🎨" },
-    { id: "cat-3", name: "Graphic Design", count: 62, icon: "◈" },
-    { id: "cat-4", name: "Writing", count: 45, icon: "✎" },
-    { id: "cat-5", name: "Marketing", count: 38, icon: "⇡" },
-    { id: "cat-6", name: "Video Editing", count: 29, icon: "►" }
-];
+const SEED_CATEGORIES = [];
 
-const SEED_JOBS = [
-    {
-        id: "job-101",
-        title: "Frontend Developer for SaaS Landing Portal",
-        summary: "Build a responsive business portal using modern HTML, CSS, and clean vanilla JS with sky-blue glassmorphism theme.",
-        description: "We are seeking a skilled Frontend Developer to build a responsive marketing site and client landing portal. Must write semantic, maintainable code without heavy frameworks. Deliverables include interactive hero, pricing tables, contact forms, and mobile navigation.",
-        category: "Web Development",
-        budgetMin: 80000,
-        budgetMax: 150000,
-        experience: "Intermediate",
-        type: "Fixed Price",
-        duration: "10 days",
-        postedAgo: "Posted 2 hours ago",
-        postedTimestamp: Date.now() - 7200000,
-        proposalsCount: 8,
-        skills: ["HTML5", "CSS3", "JavaScript", "Responsive Design"],
-        status: "open",
-        clientId: "usr-demo-cl",
-        client: {
-            id: "usr-demo-cl",
-            name: "Sarah Miller",
-            company: "Apex Tech Ventures",
-            rating: 4.9,
-            jobsPosted: 12,
-            projectsCompleted: 9
-        }
-    },
-    {
-        id: "job-102",
-        title: "SaaS Dashboard UI/UX Design System",
-        summary: "Design translucent UI components and workflow wireframes in Figma for analytics software.",
-        description: "Looking for an expert UI/UX designer to craft a high-fidelity design system for our cloud analytics SaaS platform. Experience with dark/light sky-blue glass themes and micro-interactions preferred.",
-        category: "UI/UX Design",
-        budgetMin: 180000,
-        budgetMax: 300000,
-        experience: "Expert",
-        type: "Fixed Price",
-        duration: "14 days",
-        postedAgo: "Posted 5 hours ago",
-        postedTimestamp: Date.now() - 18000000,
-        proposalsCount: 14,
-        skills: ["Figma", "UI/UX Design", "Wireframing", "Prototyping"],
-        status: "open",
-        clientId: "client-2",
-        client: {
-            id: "client-2",
-            name: "David K.",
-            company: "CloudScale Inc",
-            rating: 4.8,
-            jobsPosted: 24,
-            projectsCompleted: 21
-        }
-    },
-    {
-        id: "job-103",
-        title: "Brand Identity & Vector Logo Package",
-        summary: "Craft a modern tech logo, minimalist color guidelines, and social media vector assets.",
-        description: "Need a talented graphic designer to create a complete visual identity kit for a new fintech product launch. Deliverables include vector logos, brand books, and social media templates.",
-        category: "Graphic Design",
-        budgetMin: 40000,
-        budgetMax: 90000,
-        experience: "Beginner",
-        type: "Fixed Price",
-        duration: "5 days",
-        postedAgo: "Posted 1 day ago",
-        postedTimestamp: Date.now() - 86400000,
-        proposalsCount: 5,
-        skills: ["Graphic Design", "Logo Design", "Illustrator"],
-        status: "open",
-        clientId: "client-3",
-        client: {
-            id: "client-3",
-            name: "Elena R.",
-            company: "FinFlow Studios",
-            rating: 4.7,
-            jobsPosted: 6,
-            projectsCompleted: 5
-        }
-    },
-    {
-        id: "job-104",
-        title: "Technical Writer for REST & GraphQL API Portals",
-        summary: "Write comprehensive developer documentation and API quickstart guides.",
-        description: "Seeking a clear technical writer to document our REST and GraphQL APIs. Must be able to distill complex code samples into intuitive guides for developer portals.",
-        category: "Writing",
-        budgetMin: 60000,
-        budgetMax: 110000,
-        experience: "Intermediate",
-        type: "Hourly",
-        duration: "3 weeks",
-        postedAgo: "Posted 2 days ago",
-        postedTimestamp: Date.now() - 172800000,
-        proposalsCount: 3,
-        skills: ["Writing", "API Documentation", "Markdown", "Developer Relations"],
-        status: "open",
-        clientId: "client-4",
-        client: {
-            id: "client-4",
-            name: "Marcus T.",
-            company: "DevHub Systems",
-            rating: 5.0,
-            jobsPosted: 18,
-            projectsCompleted: 18
-        }
-    }
-];
+const SEED_JOBS = [];
 
-const SEED_FREELANCERS = [
-    {
-        id: "usr-demo-fl",
-        name: "John Doe",
-        title: "Frontend Developer & UI Specialist",
-        rating: 4.9,
-        reviewsCount: 32,
-        completedJobs: 28,
-        startingPrice: 50000,
-        category: "Web Development",
-        bio: "I build clean, high-performance, and responsive websites for growing businesses and tech startups using modern HTML, CSS, and vanilla JS.",
-        skills: ["HTML", "CSS", "JavaScript", "Responsive Design", "UI Design"],
-        availability: "Available Now",
-        email: "freelancer@skilllink.com",
-        photo: "assets/images/freelancer-1.jpg",
-        portfolio: [
-            { title: "Fintech Analytics Dashboard", category: "Web Development", description: "Glassmorphic financial analytics platform dashboard." },
-            { title: "E-Commerce Checkout Workflow", category: "Web Development", description: "Responsive online store landing page and cart workflow." }
-        ],
-        reviews: [
-            { reviewerName: "Sarah Miller", comment: "Exceptional code quality and super fast turnaround! High visual standards.", rating: 5.0, date: "2026-02-20" },
-            { reviewerName: "David K.", comment: "Communicated well and delivered a spotless UI.", rating: 4.8, date: "2026-01-14" }
-        ]
-    },
-    {
-        id: "fl-2",
-        name: "Amina Bello",
-        title: "Lead UI/UX & Product Designer",
-        rating: 5.0,
-        reviewsCount: 41,
-        completedJobs: 39,
-        startingPrice: 75000,
-        category: "UI/UX Design",
-        bio: "Designing clean, human-centered digital interfaces with modern glassmorphism and intuitive user flows.",
-        skills: ["Figma", "UI/UX Design", "Prototyping", "Wireframing"],
-        availability: "Available Next Week",
-        email: "amina@skilllink.com",
-        photo: "assets/images/freelancer-2.jpg",
-        portfolio: [
-            { title: "Healthcare Mobile App", category: "UI/UX Design", description: "Patient portal design system." }
-        ],
-        reviews: [
-            { reviewerName: "Marcus T.", comment: "Amina's designs elevated our software instantly.", rating: 5.0, date: "2026-02-01" }
-        ]
-    }
-];
+const SEED_FREELANCERS = [];
 
-const SEED_PROPOSALS = [
-    {
-        id: "prop-1",
-        jobId: "job-101",
-        jobTitle: "Frontend Developer for SaaS Landing Portal",
-        clientName: "Sarah Miller",
-        clientId: "usr-demo-cl",
-        freelancerId: "usr-demo-fl",
-        freelancerName: "John Doe",
-        bidAmount: 120000,
-        deliveryDays: 7,
-        coverLetter: "Hi Sarah! I have extensively worked with responsive glassmorphic layouts and vanilla JavaScript. I can complete your SaaS landing portal within 7 days with pixel-perfect responsive execution.",
-        status: "accepted",
-        createdAt: "2026-03-01T10:00:00.000Z"
-    }
-];
+const SEED_PROPOSALS = [];
 
-const SEED_PROJECTS = [
-    {
-        id: "proj-1",
-        jobId: "job-101",
-        jobTitle: "Frontend Developer for SaaS Landing Portal",
-        clientName: "Sarah Miller",
-        clientId: "usr-demo-cl",
-        freelancerId: "usr-demo-fl",
-        freelancerName: "John Doe",
-        budget: 120000,
-        status: "active",
-        progress: 65,
-        startDate: "2026-03-02",
-        dueDate: "2026-03-12"
-    }
-];
+const SEED_PROJECTS = [];
 
-const SEED_TRANSACTIONS = [
-    {
-        id: "tx-1",
-        userId: "usr-demo-fl",
-        type: "earning",
-        title: "Payment Received — Corporate Website Re-design",
-        amount: 180000,
-        date: "2026-01-26",
-        status: "completed"
-    },
-    {
-        id: "tx-2",
-        userId: "usr-demo-fl",
-        type: "withdrawal",
-        title: "Bank Withdrawal — GTBank (***4821)",
-        amount: 150000,
-        date: "2026-02-01",
-        status: "completed"
-    }
-];
+const SEED_TRANSACTIONS = [];
 
-const SEED_MESSAGES = [
-    {
-        conversationId: "conv-1",
-        participants: [
-            { id: "usr-demo-fl", name: "John Doe", role: "freelancer" },
-            { id: "usr-demo-cl", name: "Sarah Miller", role: "client" }
-        ],
-        lastMessage: "Sounds great! Let me review the landing portal hero section.",
-        lastTimestamp: "10:45 AM",
-        messages: [
-            { id: "m-1", senderId: "usr-demo-cl", text: "Hello John! Thanks for accepting the SaaS Landing Portal contract.", timestamp: "Yesterday 09:00 AM" },
-            { id: "m-2", senderId: "usr-demo-fl", text: "Hi Sarah! Glad to work on this. I've already set up the glassmorphism header and responsive grid layout.", timestamp: "Yesterday 09:15 AM" },
-            { id: "m-3", senderId: "usr-demo-cl", text: "Sounds great! Let me review the landing portal hero section.", timestamp: "10:45 AM" }
-        ]
-    }
-];
+const SEED_MESSAGES = [];
 
 function initMarketplaceData() {
     const blankStore = {
@@ -286,11 +65,55 @@ function initMarketplaceData() {
         [STORAGE_KEYS.SAVED_JOBS]: []
     };
 
+    const hasLegacyDemoData = () => {
+        const demoMarkers = [
+            "usr-demo-fl",
+            "usr-demo-cl",
+            "John Doe",
+            "Sarah Miller",
+            "Amina Bello",
+            "Ataba O.",
+            "David K.",
+            "Marcus T."
+        ];
+
+        return Object.keys(blankStore).some(key => {
+            try {
+                const currentValue = JSON.parse(localStorage.getItem(key) || "null");
+                if (!Array.isArray(currentValue)) return false;
+                return currentValue.some(item => {
+                    if (!item || typeof item !== "object") return false;
+                    const candidateText = [
+                        item.name,
+                        item.title,
+                        item.clientName,
+                        item.jobTitle,
+                        item.company,
+                        item.email,
+                        item.summary,
+                        item.lastMessage
+                    ].filter(Boolean).join(" ");
+                    return demoMarkers.some(marker => candidateText.includes(marker));
+                });
+            } catch (error) {
+                return false;
+            }
+        });
+    };
+
     Object.entries(blankStore).forEach(([key, value]) => {
-        if (!localStorage.getItem(key)) {
+        const stored = localStorage.getItem(key);
+        if (!stored || hasLegacyDemoData()) {
             localStorage.setItem(key, JSON.stringify(value));
         }
     });
+
+    if (hasLegacyDemoData()) {
+        localStorage.removeItem("skillLinkUser");
+        localStorage.removeItem("skillLinkUsers");
+    }
+
+    syncFreelancersFromUsers();
 }
 
 // Data Getters & Setters
@@ -318,12 +141,12 @@ function normalizeJobRecord(job = {}) {
         proposalsCount: Number(job.proposalsCount ?? job.proposals_count ?? 0),
         skills: rawSkills.length > 0 ? rawSkills : ["Web Development"],
         status: job.status || "open",
-        clientId: job.clientId || job.client_id || "usr-demo-cl",
+        clientId: job.clientId || job.client_id || "local-client",
         client: job.client || {
-            id: job.clientId || job.client_id || "usr-demo-cl",
+            id: job.clientId || job.client_id || "local-client",
             name: job.client_name || "Client",
-            rating: 4.9,
-            jobsPosted: 1
+            rating: 0,
+            jobsPosted: 0
         }
     };
 
@@ -345,13 +168,80 @@ function saveStoredJobs(jobs) {
     localStorage.setItem(STORAGE_KEYS.JOBS, JSON.stringify(normalizedJobs));
 }
 
+function normalizeFreelancerRecord(profile = {}) {
+    const name = profile.name || [profile.first_name, profile.last_name].filter(Boolean).join(" ") || "Freelancer";
+    const title = profile.title || profile.primary_skill || profile.skill || "Freelance Specialist";
+    const skills = Array.isArray(profile.skills) && profile.skills.length > 0
+        ? profile.skills
+        : (profile.primary_skill ? [profile.primary_skill] : ["Web Development"]);
+
+    return {
+        id: profile.id || `freelancer-${Date.now()}`,
+        name,
+        title,
+        rating: Number(profile.rating ?? 5.0),
+        reviewsCount: Number(profile.reviews_count ?? profile.reviewsCount ?? 0),
+        completedJobs: Number(profile.completed_jobs ?? profile.completedJobs ?? 0),
+        startingPrice: Number(profile.starting_price ?? profile.startingPrice ?? 0),
+        category: profile.primary_skill || profile.category || "Web Development",
+        bio: profile.bio || "New freelancer profile ready for work.",
+        skills,
+        availability: profile.availability || "Available Now",
+        email: profile.email || "",
+        photo: profile.photo || "",
+        portfolio: Array.isArray(profile.portfolio) ? profile.portfolio : [],
+        reviews: Array.isArray(profile.reviews) ? profile.reviews : []
+    };
+}
+
+function syncFreelancersFromUsers() {
+    const storedUsers = (() => {
+        try {
+            const raw = JSON.parse(localStorage.getItem("skillLinkUsers") || "[]");
+            return Array.isArray(raw) ? raw : [];
+        } catch (error) {
+            return [];
+        }
+    })();
+
+    const liveFreelancers = storedUsers
+        .filter(user => user && String(user.role || "").toLowerCase() === "freelancer")
+        .map(user => normalizeFreelancerRecord({
+            ...user,
+            id: user.id,
+            name: user.name || [user.firstName, user.lastName].filter(Boolean).join(" ") || "Freelancer",
+            title: user.title || user.primarySkill || user.skill || "Freelance Specialist",
+            primary_skill: user.primarySkill || user.primary_skill || user.skill || "Web Development",
+            rating: user.rating ?? 5.0,
+            reviews_count: user.reviewsCount ?? user.reviews_count ?? 0,
+            completed_jobs: user.completedJobs ?? user.completed_jobs ?? 0,
+            starting_price: user.startingPrice ?? user.starting_price ?? 0,
+            availability: user.availability || "Available Now",
+            skills: Array.isArray(user.skills) ? user.skills : []
+        }));
+
+    const storedFreelancers = (() => {
+        try {
+            const raw = JSON.parse(localStorage.getItem(STORAGE_KEYS.FREELANCERS) || "[]");
+            return Array.isArray(raw) ? raw : [];
+        } catch (error) {
+            return [];
+        }
+    })();
+
+    const merged = [...liveFreelancers, ...storedFreelancers.filter(entry => !liveFreelancers.some(active => active.id === entry.id))];
+    localStorage.setItem(STORAGE_KEYS.FREELANCERS, JSON.stringify(merged));
+    return merged;
+}
+
 function getStoredFreelancers() {
     initMarketplaceData();
-    return JSON.parse(localStorage.getItem(STORAGE_KEYS.FREELANCERS)) || [];
+    return syncFreelancersFromUsers();
 }
 
 function saveStoredFreelancers(freelancers) {
-    localStorage.setItem(STORAGE_KEYS.FREELANCERS, JSON.stringify(freelancers));
+    const normalized = Array.isArray(freelancers) ? freelancers.map(normalizeFreelancerRecord) : [];
+    localStorage.setItem(STORAGE_KEYS.FREELANCERS, JSON.stringify(normalized));
 }
 
 function getStoredCategories() {
@@ -555,6 +445,8 @@ window.updateJobRecord = updateJobRecord;
 window.deleteJobRecord = deleteJobRecord;
 window.getStoredJobs = getStoredJobs;
 window.saveStoredJobs = saveStoredJobs;
+window.normalizeFreelancerRecord = normalizeFreelancerRecord;
+window.syncFreelancersFromUsers = syncFreelancersFromUsers;
 window.getStoredFreelancers = getStoredFreelancers;
 window.saveStoredFreelancers = saveStoredFreelancers;
 window.getStoredCategories = getStoredCategories;

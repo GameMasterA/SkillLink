@@ -107,6 +107,20 @@ const supabaseClient = {
             Prefer: "return=representation"
         };
 
+        const getRequestHeaders = async () => {
+            const requestHeaders = { ...headers };
+            try {
+                const client = await getSupabaseSdkClient();
+                const { data } = await client.auth.getSession();
+                if (data?.session?.access_token) {
+                    requestHeaders.Authorization = `Bearer ${data.session.access_token}`;
+                }
+            } catch (error) {
+                console.warn("[SkillLink Cloud] Using the anonymous API key for this request.", error);
+            }
+            return requestHeaders;
+        };
+
         return {
             async select(columns = "*", filters = {}) {
                 if (!isSupabaseConfigured()) {
@@ -120,7 +134,7 @@ const supabaseClient = {
                         params.append(column, `eq.${value}`);
                     });
 
-                    const res = await fetch(`${baseUrl}?${params.toString()}`, { headers });
+                    const res = await fetch(`${baseUrl}?${params.toString()}`, { headers: await getRequestHeaders() });
                     if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
                     return { data: await res.json(), error: null };
                 } catch (error) {
@@ -136,7 +150,7 @@ const supabaseClient = {
                 try {
                     const res = await fetch(baseUrl, {
                         method: "POST",
-                        headers,
+                        headers: await getRequestHeaders(),
                         body: JSON.stringify(payload)
                     });
                     if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
@@ -158,7 +172,7 @@ const supabaseClient = {
 
                     const res = await fetch(`${baseUrl}?${params.toString()}`, {
                         method: "PATCH",
-                        headers,
+                        headers: await getRequestHeaders(),
                         body: JSON.stringify(payload)
                     });
                     if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
@@ -180,7 +194,7 @@ const supabaseClient = {
 
                     const res = await fetch(`${baseUrl}?${params.toString()}`, {
                         method: "DELETE",
-                        headers
+                        headers: await getRequestHeaders()
                     });
                     if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
                     return { data: await res.json(), error: null };

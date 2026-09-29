@@ -128,5 +128,15 @@ create policy "Allow public read on projects" on public.projects for select usin
 create policy "Allow public insert on projects" on public.projects for insert with check (true);
 create policy "Allow public read on transactions" on public.transactions for select using (true);
 create policy "Allow public insert on transactions" on public.transactions for insert with check (true);
-create policy "Allow public read on messages" on public.messages for select using (true);
-create policy "Allow public insert on messages" on public.messages for insert with check (true);
+create policy "Participants can read messages" on public.messages for select
+    using (sender_id = auth.uid()::text or receiver_id = auth.uid()::text);
+create policy "Users can send messages as themselves" on public.messages for insert
+    with check (sender_id = auth.uid()::text);
+create policy "Receivers can mark messages read" on public.messages for update
+    using (receiver_id = auth.uid()::text)
+    with check (receiver_id = auth.uid()::text);
+
+revoke all on public.messages from anon;
+revoke all on public.messages from authenticated;
+grant select, insert on public.messages to authenticated;
+grant update (is_read) on public.messages to authenticated;

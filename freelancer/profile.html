@@ -91,7 +91,7 @@
                 <h2 style="font-size: 1.25rem; font-weight: 700; color: var(--text-dark);">Public Freelancer Profile</h2>
                 <div style="display: flex; align-items: center; gap: 10px;">
                     <div class="user-avatar-initial" style="width: 38px; height: 38px; border-radius: 50%; background: linear-gradient(135deg, var(--primary), var(--accent-blue)); color: #fff; display: flex; align-items: center; justify-content: center; font-weight: 700;">J</div>
-                    <span class="user-display-name" style="font-weight: 700; font-size: 0.9rem;">John Doe</span>
+                    <span class="user-display-name" style="font-weight: 700; font-size: 0.9rem;">Your Name</span>
                 </div>
             </header>
 
@@ -100,11 +100,11 @@
                     <div style="display: flex; align-items: center; gap: 24px; margin-bottom: 28px; flex-wrap: wrap;">
                         <div class="user-avatar-initial" style="width: 84px; height: 84px; border-radius: 50%; background: linear-gradient(135deg, var(--primary), var(--accent-blue)); color: #fff; display: flex; align-items: center; justify-content: center; font-size: 32px; font-weight: 800; box-shadow: 0 8px 25px rgba(2,132,199,0.35);">J</div>
                         <div>
-                            <h1 class="user-display-name" style="font-size: 1.85rem; font-weight: 800; color: var(--text-dark);">John Doe</h1>
-                            <p style="color: var(--primary); font-weight: 700; font-size: 1.05rem; margin-top: 2px;">Frontend Developer & UI Specialist</p>
+                            <h1 class="user-display-name" style="font-size: 1.85rem; font-weight: 800; color: var(--text-dark);">Your Name</h1>
+                            <p style="color: var(--primary); font-weight: 700; font-size: 1.05rem; margin-top: 2px;">Your Professional Title</p>
                             <p style="font-size: 0.85rem; color: var(--text-muted); margin-top: 4px; display:flex; align-items:center; gap:6px;">
                                 <svg class="svg-icon" viewBox="0 0 24 24" style="width:14px; height:14px; fill:#f59e0b; stroke:#f59e0b;"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
-                                <span>4.9 Rating (32 Reviews)</span> • <span>28 Completed Projects</span>
+                                <span>0 Rating</span> • <span>0 Completed Projects</span>
                             </p>
                         </div>
                     </div>
@@ -112,18 +112,18 @@
                     <form id="profileEditForm" onsubmit="event.preventDefault(); if(typeof showToast==='function') showToast('Profile updated successfully!', 'success');">
                         <div style="margin-bottom: 16px;">
                             <label>Professional Title</label>
-                            <input type="text" id="profTitle" value="Frontend Developer & UI Specialist" style="width: 100%;">
+                            <input type="text" id="profTitle" value="" placeholder="Your professional title" style="width: 100%;">
                         </div>
 
                         <div style="margin-bottom: 16px;">
                             <label>Bio Summary</label>
-                            <textarea id="profBio" rows="4" style="width: 100%;">I build clean, high-performance, and responsive websites for growing businesses and tech startups using modern HTML, CSS, and vanilla JS.</textarea>
+                            <textarea id="profBio" rows="4" style="width: 100%;" placeholder="Tell clients about your work..."></textarea>
                         </div>
 
                         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px;">
                             <div>
                                 <label>Starting Budget (₦)</label>
-                                <input type="number" id="profRate" value="50000" style="width: 100%;">
+                                <input type="number" id="profRate" value="0" style="width: 100%;">
                             </div>
                             <div>
                                 <label>Availability</label>
@@ -137,7 +137,7 @@
 
                         <div style="margin-bottom: 24px;">
                             <label>Skills (comma separated)</label>
-                            <input type="text" id="profSkills" value="HTML, CSS, JavaScript, Responsive Design, UI Design" style="width: 100%;">
+                            <input type="text" id="profSkills" value="" placeholder="Add your skills" style="width: 100%;">
                         </div>
 
                         <button type="submit" class="btn btn-primary" style="padding: 12px 28px;">Save Profile Changes</button>

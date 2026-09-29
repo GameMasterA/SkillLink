@@ -663,6 +663,9 @@ async function handleLoginSubmit(e) {
                 allUsers.push(localMirror);
             }
             saveUsers(allUsers);
+            if (typeof syncFreelancersFromUsers === "function") {
+                syncFreelancersFromUsers();
+            }
 
             setCurrentUser(profile);
             setAlert("loginAlert", "Authenticated! Redirecting to dashboard...", false);
