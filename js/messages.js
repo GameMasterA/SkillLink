@@ -418,13 +418,24 @@ function initMessagingEngine() {
 
     const params = new URLSearchParams(window.location.search || "");
     const queryConversation = params.get("conversation");
+    const currentUser = getActiveUser();
     if (queryConversation) {
         activeConversationId = queryConversation;
-        const currentUser = getActiveUser();
         const targetConversation = getStoredMessages().find(entry => entry.conversationId === queryConversation);
         if (targetConversation && currentUser) {
             markLocalConversationRead(targetConversation, currentUser.id);
             markCloudMessagesRead(targetConversation, currentUser.id);
+        }
+    }
+
+    if (!activeConversationId && currentUser) {
+        const firstConversation = getStoredMessages().find(entry =>
+            Array.isArray(entry.participants) && entry.participants.some(participant => String(participant.id) === String(currentUser.id))
+        );
+        if (firstConversation) {
+            activeConversationId = firstConversation.conversationId;
+            markLocalConversationRead(firstConversation, currentUser.id);
+            markCloudMessagesRead(firstConversation, currentUser.id);
         }
     }
 

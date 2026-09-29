@@ -413,7 +413,7 @@ function initFlowerIntroAnimation() {
 function initScrollReveal() {
     // Select elements to animate
     const revealSelectors = [
-        '.glass-card',
+        '.glass-card:not(#chatInterfaceContainer)',
         '.stat-card',
         '.job-glass-card',
         '.category-card',
