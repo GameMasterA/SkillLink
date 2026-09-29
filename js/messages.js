@@ -5,6 +5,7 @@
 
 let activeConversationId = null;
 let messageRefreshTimer = null;
+let cloudSessionNoticeShown = false;
 const MESSAGE_REFRESH_INTERVAL = 5000;
 
 document.addEventListener("DOMContentLoaded", () => {
@@ -141,8 +142,13 @@ async function syncCloudInbox() {
     const sessionState = await ensureCloudMessagingSession();
     if (!sessionState.supported || String(sessionState.userId) !== String(activeUser.id)) {
         console.warn("[SkillLink Messages] Inbox sync requires a matching authenticated user session.");
+        if (!cloudSessionNoticeShown && typeof showToast === "function") {
+            showToast("Sign in again on this device to sync your messages.", "error");
+            cloudSessionNoticeShown = true;
+        }
         return;
     }
+    cloudSessionNoticeShown = false;
 
     const [incoming, outgoing] = await Promise.all([
         client.from("messages").select("id,sender_id,receiver_id,content,is_read,created_at", { receiver_id: String(activeUser.id) }),
@@ -151,6 +157,10 @@ async function syncCloudInbox() {
     const error = incoming.error || outgoing.error;
     if (error) {
         console.warn("[SkillLink Messages] Inbox sync failed; keeping local conversations.", error);
+        if (/status: 401|status: 403/.test(String(error.message)) && !cloudSessionNoticeShown && typeof showToast === "function") {
+            showToast("Your session expired. Sign in again to receive messages.", "error");
+            cloudSessionNoticeShown = true;
+        }
         return;
     }
 

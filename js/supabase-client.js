@@ -144,7 +144,17 @@ const supabaseClient = {
                         params.append(column, `eq.${value}`);
                     });
 
-                    const res = await fetch(`${baseUrl}?${params.toString()}`, { headers: await getRequestHeaders() });
+                    const requestUrl = `${baseUrl}?${params.toString()}`;
+                    const requestHeaders = await getRequestHeaders();
+                    let res = await fetch(requestUrl, { headers: requestHeaders });
+                    if (!res.ok && [401, 403].includes(res.status) && ["jobs", "profiles", "categories"].includes(table)) {
+                        res = await fetch(requestUrl, {
+                            headers: {
+                                ...headers,
+                                Authorization: `Bearer ${SUPABASE_CONFIG.ANON_KEY}`
+                            }
+                        });
+                    }
                     if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
                     return { data: await res.json(), error: null };
                 } catch (error) {
