@@ -432,19 +432,20 @@ async function syncFromCloudDatabase() {
     }
 
     try {
-        const jobsTable = await supabaseClient.from("jobs");
-        const { data: cloudJobs, error: jobsErr } = await jobsTable.select();
-        if (!jobsErr && cloudJobs && cloudJobs.length > 0) {
-            saveStoredJobs(cloudJobs);
+        const [{ data: cloudJobs, error: jobsErr }, { data: cloudProfiles, error: profilesErr }] = await Promise.all([
+            supabaseClient.from("jobs").select(),
+            supabaseClient.from("profiles").select()
+        ]);
+
+        if (jobsErr) return { success: false, error: jobsErr };
+        if (!Array.isArray(cloudJobs)) return { success: false, error: new Error("Cloud jobs response was invalid") };
+
+        saveStoredJobs(cloudJobs);
+        if (!profilesErr && Array.isArray(cloudProfiles)) {
+            saveStoredFreelancers(cloudProfiles.filter(profile => profile.role === "freelancer"));
         }
 
-        const profilesTable = await supabaseClient.from("profiles");
-        const { data: cloudProfiles, error: profErr } = await profilesTable.select();
-        if (!profErr && cloudProfiles && cloudProfiles.length > 0) {
-            saveStoredFreelancers(cloudProfiles.filter(p => p.role === "freelancer"));
-        }
-
-        return { success: true, cloudJobsCount: cloudJobs ? cloudJobs.length : 0 };
+        return { success: true, cloudJobsCount: cloudJobs.length };
     } catch (err) {
         console.warn("[SkillLink Cloud] Sync encountered an error:", err);
         return { success: false, error: err };
@@ -473,6 +474,7 @@ window.saveProposal = saveProposal;
 window.getStoredProjects = getStoredProjects;
 window.saveStoredProjects = saveStoredProjects;
 window.getStoredTransactions = getStoredTransactions;
+window.syncFromCloudDatabase = syncFromCloudDatabase;
 window.saveStoredTransactions = saveStoredTransactions;
 window.getStoredMessages = getStoredMessages;
 window.saveStoredMessages = saveStoredMessages;

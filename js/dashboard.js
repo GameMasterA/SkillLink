@@ -272,6 +272,14 @@ function initClientDashboard() {
     renderClientStats();
     renderClientJobsTable();
     setupPostJobForm();
+    if (typeof syncFromCloudDatabase === "function") {
+        syncFromCloudDatabase().then(result => {
+            if (result.success) {
+                renderClientStats();
+                renderClientJobsTable();
+            }
+        });
+    }
 }
 
 function renderClientStats() {

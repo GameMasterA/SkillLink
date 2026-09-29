@@ -139,7 +139,10 @@ async function syncCloudInbox() {
     if (!activeUser?.id || !client) return;
 
     const sessionState = await ensureCloudMessagingSession();
-    if (!sessionState.supported) return;
+    if (!sessionState.supported || String(sessionState.userId) !== String(activeUser.id)) {
+        console.warn("[SkillLink Messages] Inbox sync requires a matching authenticated user session.");
+        return;
+    }
 
     const [incoming, outgoing] = await Promise.all([
         client.from("messages").select("id,sender_id,receiver_id,content,is_read,created_at", { receiver_id: String(activeUser.id) }),
@@ -609,6 +612,12 @@ async function handleSendMessageSubmit(e) {
     }
     const conversations = typeof getStoredMessages === "function" ? getStoredMessages() : [];
     const sessionState = await ensureCloudMessagingSession();
+    if (getCloudMessagesClient() && (!sessionState.supported || String(sessionState.userId) !== String(activeUser.id))) {
+        if (typeof showToast === "function") {
+            showToast("Your cloud session expired. Sign in again before sending messages.", "error");
+        }
+        return;
+    }
     const safeSenderId = sessionState.supported ? String(sessionState.userId) : String(activeUser.id);
 
     const convIndex = conversations.findIndex(c => c.conversationId === activeConversationId);

@@ -72,6 +72,16 @@ function initJobsMarketplace() {
     document.getElementById("sortFilter")?.addEventListener("change", filterAndRenderJobs);
 
     filterAndRenderJobs();
+    if (typeof syncFromCloudDatabase === "function") {
+        syncFromCloudDatabase().then(result => {
+            if (!result.success) {
+                console.warn("[SkillLink Jobs] Cloud marketplace refresh failed.", result.error || result.reason);
+                return;
+            }
+            renderCategoryStrip();
+            filterAndRenderJobs();
+        });
+    }
 }
 
 function filterAndRenderJobs() {
