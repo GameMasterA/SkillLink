@@ -5,8 +5,13 @@
 
 let activeConversationId = null;
 let messageRefreshTimer = null;
+let typingRefreshTimer = null;
 let cloudSessionNoticeShown = false;
+let lastTypingPresenceSentAt = 0;
+let typingPollInFlight = false;
 const MESSAGE_REFRESH_INTERVAL = 5000;
+const TYPING_PULSE_INTERVAL = 2500;
+const TYPING_REFRESH_INTERVAL = 2000;
 
 document.addEventListener("DOMContentLoaded", () => {
     initMessagingEngine();
@@ -148,8 +153,6 @@ async function syncCloudInbox() {
         }
         return;
     }
-    cloudSessionNoticeShown = false;
-
     const [incoming, outgoing] = await Promise.all([
         client.from("messages").select("id,sender_id,receiver_id,content,is_read,created_at", { receiver_id: String(activeUser.id) }),
         client.from("messages").select("id,sender_id,receiver_id,content,is_read,created_at", { sender_id: String(activeUser.id) })
@@ -163,6 +166,7 @@ async function syncCloudInbox() {
         }
         return;
     }
+    cloudSessionNoticeShown = false;
 
     const rows = [...(incoming.data || []), ...(outgoing.data || [])];
     const groupedRows = new Map();
@@ -291,6 +295,55 @@ function getUnreadCount(conversation, userId) {
     return (conversation.messages || []).filter(message =>
         getMessageReceiverId(message, conversation) === String(userId) && !message.isRead
     ).length;
+}
+
+async function updateTypingPresence(isTyping) {
+    const client = getCloudMessagesClient();
+    const activeUser = getActiveUser();
+    const conversation = getStoredMessages().find(entry => entry.conversationId === activeConversationId);
+    const recipient = conversation && activeUser ? getConversationParticipant(conversation, activeUser.id) : null;
+    const sessionState = await ensureCloudMessagingSession();
+    if (!client?.rpc || !recipient?.id || !sessionState.supported || String(sessionState.userId) !== String(activeUser?.id)) return;
+
+    const result = await client.rpc("set_message_typing", {
+        p_receiver_id: String(recipient.id),
+        p_is_typing: Boolean(isTyping)
+    });
+    if (result.error && !isTyping) {
+        console.warn("[SkillLink Messages] Could not clear typing presence.", result.error);
+    }
+}
+
+function renderTypingIndicator(isTyping, participant) {
+    const indicator = document.getElementById("typingIndicator");
+    if (!indicator) return;
+    indicator.hidden = !isTyping;
+    indicator.innerHTML = isTyping
+        ? `${escapeMessageHtml(getUserDisplayName(participant))} is typing<span class="typing-dots" aria-hidden="true"><i></i><i></i><i></i></span>`
+        : "";
+}
+
+function startTypingIndicatorRefresh() {
+    if (typingRefreshTimer) window.clearInterval(typingRefreshTimer);
+    typingRefreshTimer = window.setInterval(async () => {
+        if (document.hidden || typingPollInFlight || !activeConversationId) return;
+        const activeUser = getActiveUser();
+        const conversation = getStoredMessages().find(entry => entry.conversationId === activeConversationId);
+        const participant = conversation && activeUser ? getConversationParticipant(conversation, activeUser.id) : null;
+        const client = getCloudMessagesClient();
+        if (!client?.rpc || !participant?.id || !(await ensureCloudMessagingSession()).supported) {
+            renderTypingIndicator(false);
+            return;
+        }
+
+        typingPollInFlight = true;
+        try {
+            const result = await client.rpc("get_message_typing", { p_sender_id: String(participant.id) });
+            if (!result.error) renderTypingIndicator(Boolean(result.data), participant);
+        } finally {
+            typingPollInFlight = false;
+        }
+    }, TYPING_REFRESH_INTERVAL);
 }
 
 async function refreshConversationMessages(conversationId = activeConversationId) {
@@ -467,6 +520,23 @@ function initMessagingEngine() {
     if (sendForm) {
         sendForm.addEventListener("submit", handleSendMessageSubmit);
     }
+    const chatInput = document.getElementById("chatInput");
+    if (chatInput) {
+        chatInput.addEventListener("input", () => {
+            if (!chatInput.value.trim()) {
+                lastTypingPresenceSentAt = 0;
+                updateTypingPresence(false);
+                return;
+            }
+            const now = Date.now();
+            if (now - lastTypingPresenceSentAt >= TYPING_PULSE_INTERVAL) {
+                lastTypingPresenceSentAt = now;
+                updateTypingPresence(true);
+            }
+        });
+        chatInput.addEventListener("blur", () => updateTypingPresence(false));
+    }
+    startTypingIndicatorRefresh();
 }
 
 function getActiveUser() {
@@ -613,6 +683,7 @@ async function handleSendMessageSubmit(e) {
     if (!input || !input.value.trim() || !activeConversationId) return;
 
     const text = input.value.trim();
+    updateTypingPresence(false);
     const activeUser = getActiveUser();
     if (!activeUser) {
         if (typeof showToast === "function") {

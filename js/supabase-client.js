@@ -55,11 +55,18 @@ function getSupabaseSdkClient() {
     return supabaseSdkPromise;
 }
 
-async function getAuthenticatedSessionData() {
+async function getAuthenticatedSessionData(forceRefresh = false) {
     try {
         const client = await getSupabaseSdkClient();
         const { data } = await client.auth.getSession();
-        return data?.session || null;
+        const session = data?.session || null;
+        const expiresAt = Number(session?.expires_at || 0) * 1000;
+        if (session && client.auth.refreshSession && (forceRefresh || (expiresAt > 0 && expiresAt <= Date.now() + 60000))) {
+            const refreshed = await client.auth.refreshSession();
+            if (!refreshed.error && refreshed.data?.session) return refreshed.data.session;
+            if (forceRefresh || expiresAt <= Date.now()) return null;
+        }
+        return session;
     } catch (error) {
         return null;
     }
@@ -131,6 +138,22 @@ const supabaseClient = {
             return requestHeaders;
         };
 
+        const sendRequest = async (url, options = {}) => {
+            let requestHeaders = await getRequestHeaders();
+            let response = await fetch(url, { ...options, headers: requestHeaders });
+            if (response.status === 401) {
+                const refreshedSession = await getAuthenticatedSessionData(true);
+                if (refreshedSession?.access_token) {
+                    requestHeaders = {
+                        ...requestHeaders,
+                        Authorization: `Bearer ${refreshedSession.access_token}`
+                    };
+                    response = await fetch(url, { ...options, headers: requestHeaders });
+                }
+            }
+            return { response, requestHeaders };
+        };
+
         return {
             async select(columns = "*", filters = {}) {
                 if (!isSupabaseConfigured()) {
@@ -145,8 +168,7 @@ const supabaseClient = {
                     });
 
                     const requestUrl = `${baseUrl}?${params.toString()}`;
-                    const requestHeaders = await getRequestHeaders();
-                    let res = await fetch(requestUrl, { headers: requestHeaders });
+                    let { response: res, requestHeaders } = await sendRequest(requestUrl);
                     if (!res.ok && [401, 403].includes(res.status) && ["jobs", "profiles", "categories"].includes(table)) {
                         res = await fetch(requestUrl, {
                             headers: {
@@ -168,9 +190,8 @@ const supabaseClient = {
                 }
 
                 try {
-                    const res = await fetch(baseUrl, {
+                    const { response: res } = await sendRequest(baseUrl, {
                         method: "POST",
-                        headers: await getRequestHeaders(),
                         body: JSON.stringify(payload)
                     });
                     if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
@@ -190,9 +211,8 @@ const supabaseClient = {
                         params.append(column, `eq.${value}`);
                     });
 
-                    const res = await fetch(`${baseUrl}?${params.toString()}`, {
+                    const { response: res } = await sendRequest(`${baseUrl}?${params.toString()}`, {
                         method: "PATCH",
-                        headers: await getRequestHeaders(),
                         body: JSON.stringify(payload)
                     });
                     if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
@@ -212,9 +232,8 @@ const supabaseClient = {
                         params.append(column, `eq.${value}`);
                     });
 
-                    const res = await fetch(`${baseUrl}?${params.toString()}`, {
-                        method: "DELETE",
-                        headers: await getRequestHeaders()
+                    const { response: res } = await sendRequest(`${baseUrl}?${params.toString()}`, {
+                        method: "DELETE"
                     });
                     if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
                     return { data: await res.json(), error: null };
@@ -230,20 +249,29 @@ const supabaseClient = {
         }
 
         try {
-            const headers = await getAuthenticatedSessionData();
-            if (!headers?.access_token) {
+            let session = await getAuthenticatedSessionData();
+            if (!session?.access_token) {
                 return { data: null, error: new Error("Supabase user session is required for this request") };
             }
 
-            const response = await fetch(`${SUPABASE_CONFIG.URL}/rest/v1/rpc/${encodeURIComponent(functionName)}`, {
+            const url = `${SUPABASE_CONFIG.URL}/rest/v1/rpc/${encodeURIComponent(functionName)}`;
+            const options = {
                 method: "POST",
                 headers: {
                     apikey: SUPABASE_CONFIG.ANON_KEY,
-                    Authorization: `Bearer ${headers.access_token}`,
+                    Authorization: `Bearer ${session.access_token}`,
                     "Content-Type": "application/json"
                 },
                 body: JSON.stringify(parameters)
-            });
+            };
+            let response = await fetch(url, options);
+            if (response.status === 401) {
+                session = await getAuthenticatedSessionData(true);
+                if (session?.access_token) {
+                    options.headers.Authorization = `Bearer ${session.access_token}`;
+                    response = await fetch(url, options);
+                }
+            }
             if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
             return { data: await response.json(), error: null };
         } catch (error) {
