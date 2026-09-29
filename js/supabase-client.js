@@ -55,6 +55,16 @@ function getSupabaseSdkClient() {
     return supabaseSdkPromise;
 }
 
+async function getAuthenticatedSessionData() {
+    try {
+        const client = await getSupabaseSdkClient();
+        const { data } = await client.auth.getSession();
+        return data?.session || null;
+    } catch (error) {
+        return null;
+    }
+}
+
 const supabaseClient = {
     auth: {
         async signUp({ email, password, options = {} }) {
@@ -110,13 +120,13 @@ const supabaseClient = {
         const getRequestHeaders = async () => {
             const requestHeaders = { ...headers };
             try {
-                const client = await getSupabaseSdkClient();
-                const { data } = await client.auth.getSession();
-                if (data?.session?.access_token) {
-                    requestHeaders.Authorization = `Bearer ${data.session.access_token}`;
+                const session = await getAuthenticatedSessionData();
+                if (session?.access_token) {
+                    requestHeaders.apikey = SUPABASE_CONFIG.ANON_KEY;
+                    requestHeaders.Authorization = `Bearer ${session.access_token}`;
                 }
             } catch (error) {
-                console.warn("[SkillLink Cloud] Using the anonymous API key for this request.", error);
+                console.warn("[SkillLink Cloud] No authenticated session was available for this request.", error);
             }
             return requestHeaders;
         };

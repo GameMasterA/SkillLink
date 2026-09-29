@@ -643,9 +643,11 @@ async function handleLoginSubmit(e) {
 
             const allUsers = getUsers();
             const existingEntryIndex = allUsers.findIndex(u => String(u.email || '').toLowerCase() === String(email).toLowerCase());
+            const authUserId = data?.user?.id || profile.id || `usr-${Date.now()}`;
+            profile.id = authUserId;
             const localMirror = {
                 ...profile,
-                id: profile.id || data?.user?.id || `usr-${Date.now()}`,
+                id: authUserId,
                 email,
                 role: profile.role || fallbackRole,
                 firstName: profile.first_name || data?.user?.user_metadata?.first_name || profile.name?.split(' ')[0] || 'User',

@@ -52,6 +52,26 @@ function getCloudMessagesClient() {
     return window.isSupabaseConfigured?.() && window.supabaseClient?.from ? window.supabaseClient : null;
 }
 
+async function getAuthenticatedUserId() {
+    const client = getCloudMessagesClient();
+    if (!client?.auth?.getSession) return null;
+
+    try {
+        const { data } = await client.auth.getSession();
+        return data?.session?.user?.id || null;
+    } catch (error) {
+        return null;
+    }
+}
+
+async function ensureCloudMessagingSession() {
+    const authUserId = await getAuthenticatedUserId();
+    if (!authUserId) {
+        return { supported: false, userId: null, error: new Error("Cloud messaging requires an authenticated Supabase session.") };
+    }
+    return { supported: true, userId: authUserId, error: null };
+}
+
 function mapCloudMessage(row, conversation) {
     const senderId = String(row.sender_id);
     const receiverId = String(row.receiver_id);
@@ -71,6 +91,9 @@ function mapCloudMessage(row, conversation) {
 async function fetchCloudConversationMessages(conversation) {
     const client = getCloudMessagesClient();
     if (!client) return { supported: false, messages: [], error: null };
+
+    const sessionState = await ensureCloudMessagingSession();
+    if (!sessionState.supported) return { supported: false, messages: [], error: sessionState.error };
 
     const participantIds = conversation.participants.map(participant => String(participant.id));
     const [firstDirection, secondDirection] = await Promise.all([
@@ -114,6 +137,9 @@ async function syncCloudInbox() {
     const activeUser = getActiveUser();
     const client = getCloudMessagesClient();
     if (!activeUser?.id || !client) return;
+
+    const sessionState = await ensureCloudMessagingSession();
+    if (!sessionState.supported) return;
 
     const [incoming, outgoing] = await Promise.all([
         client.from("messages").select("id,sender_id,receiver_id,content,is_read,created_at", { receiver_id: String(activeUser.id) }),
@@ -174,13 +200,26 @@ async function persistCloudMessage(message, receiverId) {
     const client = getCloudMessagesClient();
     if (!client) return { supported: false, message: null, error: null };
 
+    const sessionState = await ensureCloudMessagingSession();
+    if (!sessionState.supported) {
+        return { supported: false, message: null, error: sessionState.error };
+    }
+
+    const authUserId = String(sessionState.userId);
+    const senderId = String(message.senderId || authUserId);
+    const normalizedMessage = {
+        ...message,
+        senderId: senderId === "null" ? authUserId : senderId,
+        receiverId: String(receiverId)
+    };
+
     const { data, error } = await client.from("messages").insert([{
-        id: message.id,
-        sender_id: String(message.senderId),
+        id: normalizedMessage.id,
+        sender_id: authUserId,
         receiver_id: String(receiverId),
-        content: message.text,
+        content: normalizedMessage.text,
         is_read: false,
-        created_at: message.timestamp
+        created_at: normalizedMessage.timestamp
     }]);
     return {
         supported: true,
@@ -192,6 +231,10 @@ async function persistCloudMessage(message, receiverId) {
 async function markCloudMessagesRead(conversation, userId) {
     const client = getCloudMessagesClient();
     if (!client) return { supported: false, error: null };
+
+    const sessionState = await ensureCloudMessagingSession();
+    if (!sessionState.supported) return { supported: false, error: sessionState.error };
+
     const sender = getConversationParticipant(conversation, userId);
     if (!sender) return { supported: true, error: null };
     const { error } = await client.from("messages").update({ is_read: true }, {
@@ -541,6 +584,8 @@ async function handleSendMessageSubmit(e) {
         return;
     }
     const conversations = typeof getStoredMessages === "function" ? getStoredMessages() : [];
+    const sessionState = await ensureCloudMessagingSession();
+    const safeSenderId = sessionState.supported ? String(sessionState.userId) : String(activeUser.id);
 
     const convIndex = conversations.findIndex(c => c.conversationId === activeConversationId);
     if (convIndex !== -1) {
@@ -561,14 +606,14 @@ async function handleSendMessageSubmit(e) {
 
         const newMessage = {
             id: `msg-${activeUser.id}-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
-            senderId: activeUser.id,
+            senderId: safeSenderId,
             receiverId: recipient.id,
             text: text,
             timestamp,
             isRead: false
         };
 
-        const cloudResult = await persistCloudMessage(newMessage, recipient.id);
+        const cloudResult = sessionState.supported ? await persistCloudMessage(newMessage, recipient.id) : { supported: false, message: null, error: null };
         if (cloudResult.supported && cloudResult.error) {
             if (sendButton) sendButton.disabled = false;
             if (typeof showToast === "function") {
