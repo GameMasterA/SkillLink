@@ -270,12 +270,20 @@ async function createJobRecord(jobRecord) {
     const normalizedJob = normalizeJobRecord(jobRecord);
     const localJobs = getStoredJobs();
     const payload = {
-        ...normalizedJob,
-        client_id: normalizedJob.clientId,
-        client_name: normalizedJob.client?.name || "Client",
+        id: normalizedJob.id,
+        title: normalizedJob.title,
+        summary: normalizedJob.summary,
+        description: normalizedJob.description,
+        category: normalizedJob.category,
         budget_min: normalizedJob.budgetMin,
         budget_max: normalizedJob.budgetMax,
+        experience: normalizedJob.experience,
+        type: normalizedJob.type,
+        duration: normalizedJob.duration,
         proposals_count: normalizedJob.proposalsCount,
+        skills: normalizedJob.skills,
+        status: normalizedJob.status,
+        client_id: normalizedJob.clientId,
         created_at: new Date().toISOString()
     };
 
@@ -316,12 +324,20 @@ async function updateJobRecord(jobId, updates) {
     saveStoredJobs(workingJobs);
 
     const jobPayload = {
-        ...nextJob,
-        client_id: nextJob.clientId,
-        client_name: nextJob.client?.name || "Client",
+        id: nextJob.id,
+        title: nextJob.title,
+        summary: nextJob.summary,
+        description: nextJob.description,
+        category: nextJob.category,
         budget_min: nextJob.budgetMin,
         budget_max: nextJob.budgetMax,
-        proposals_count: nextJob.proposalsCount
+        experience: nextJob.experience,
+        type: nextJob.type,
+        duration: nextJob.duration,
+        proposals_count: nextJob.proposalsCount,
+        skills: nextJob.skills,
+        status: nextJob.status,
+        client_id: nextJob.clientId
     };
 
     if (typeof window !== "undefined" && window.isSupabaseConfigured && window.isSupabaseConfigured()) {

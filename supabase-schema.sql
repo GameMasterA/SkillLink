@@ -38,6 +38,15 @@ create table if not exists public.categories (
     created_at timestamp with time zone default timezone('utc'::text, now()) not null
 );
 
+insert into public.categories (id, name) values
+    ('web-development', 'Web Development'),
+    ('ui-ux-design', 'UI/UX Design'),
+    ('graphic-design', 'Graphic Design'),
+    ('writing', 'Writing'),
+    ('marketing', 'Marketing'),
+    ('video-editing', 'Video Editing')
+on conflict (name) do nothing;
+
 -- 3. Jobs Table
 create table if not exists public.jobs (
     id text primary key default concat('job-', replace(uuid_generate_v4()::text, '-', '')),
