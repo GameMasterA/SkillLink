@@ -17,6 +17,7 @@ function isSupabaseConfigured() {
 
 let supabaseSdkClient = null;
 let supabaseSdkPromise = null;
+let supabaseSessionRefreshPromise = null;
 
 function getSupabaseSdkClient() {
     if (supabaseSdkClient) return Promise.resolve(supabaseSdkClient);
@@ -58,13 +59,28 @@ function getSupabaseSdkClient() {
 async function getAuthenticatedSessionData(forceRefresh = false) {
     try {
         const client = await getSupabaseSdkClient();
+        if (supabaseSessionRefreshPromise) {
+            const refreshedSession = await supabaseSessionRefreshPromise;
+            if (refreshedSession) return refreshedSession;
+        }
+
         const { data } = await client.auth.getSession();
         const session = data?.session || null;
         const expiresAt = Number(session?.expires_at || 0) * 1000;
         if (session && client.auth.refreshSession && (forceRefresh || (expiresAt > 0 && expiresAt <= Date.now() + 60000))) {
-            const refreshed = await client.auth.refreshSession();
-            if (!refreshed.error && refreshed.data?.session) return refreshed.data.session;
-            if (forceRefresh || expiresAt <= Date.now()) return null;
+            if (!supabaseSessionRefreshPromise) {
+                supabaseSessionRefreshPromise = client.auth.refreshSession()
+                    .then(refreshed => refreshed.error ? null : (refreshed.data?.session || null))
+                    .catch(() => null)
+                    .finally(() => { supabaseSessionRefreshPromise = null; });
+            }
+            const refreshedSession = await supabaseSessionRefreshPromise;
+            if (refreshedSession) return refreshedSession;
+
+            const currentSession = (await client.auth.getSession())?.data?.session || null;
+            const currentExpiry = Number(currentSession?.expires_at || 0) * 1000;
+            if (currentSession && (!currentExpiry || currentExpiry > Date.now())) return currentSession;
+            return null;
         }
         return session;
     } catch (error) {
@@ -108,8 +124,7 @@ const supabaseClient = {
         },
         async getSession() {
             try {
-                const client = await getSupabaseSdkClient();
-                return await client.auth.getSession();
+                return { data: { session: await getAuthenticatedSessionData() }, error: null };
             } catch (error) {
                 return { data: { session: null }, error };
             }
