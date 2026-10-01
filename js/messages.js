@@ -22,6 +22,12 @@ function buildConversationId(userAId, userBId) {
     return `conv-${ids[0]}-${ids[1]}`;
 }
 
+function getRoleMessagesPage(role) {
+    const currentPath = window.location.pathname || "";
+    const inRoleFolder = currentPath.includes("/client/") || currentPath.includes("/freelancer/") || currentPath.includes("/admin/");
+    return `${inRoleFolder ? "../" : ""}${role}/messages.html`;
+}
+
 function getUserDisplayName(user) {
     if (!user) return "User";
     return user.name || [user.firstName, user.lastName].filter(Boolean).join(" ") || user.email || "User";
@@ -430,7 +436,7 @@ function openConversationWithUser(participantId, participantName) {
         }
         const currentPath = typeof window !== "undefined" && window.location ? (window.location.pathname || "") : "";
         if (!currentPath.includes("/messages.html") && (activeUser.role === "client" || activeUser.role === "freelancer")) {
-            const targetMessagesPage = activeUser.role === "client" ? "client/messages.html" : "freelancer/messages.html";
+            const targetMessagesPage = getRoleMessagesPage(activeUser.role);
             window.location.href = `${targetMessagesPage}?conversation=${encodeURIComponent(existingConversation.conversationId)}`;
         }
         refreshConversationMessages(existingConversation.conversationId);
@@ -467,7 +473,9 @@ function openConversationWithUser(participantId, participantName) {
     const currentPath = typeof window !== "undefined" && window.location ? (window.location.pathname || "") : "";
     const isMessagesPage = currentPath.includes("/messages.html");
     if (!isMessagesPage) {
-        const targetMessagesPage = activeUser.role === "client" ? "client/messages.html" : (activeUser.role === "freelancer" ? "freelancer/messages.html" : "login.html");
+        const targetMessagesPage = activeUser.role === "client" || activeUser.role === "freelancer"
+            ? getRoleMessagesPage(activeUser.role)
+            : "login.html";
         if (targetMessagesPage !== "login.html" && typeof window !== "undefined" && window.location) {
             window.location.href = `${targetMessagesPage}?conversation=${encodeURIComponent(conversationId)}`;
         }
