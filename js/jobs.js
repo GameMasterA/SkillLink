@@ -304,6 +304,10 @@ async function handleProposalSubmit(e) {
         return;
     }
 
+    const form = e.currentTarget;
+    if (form.dataset.submitting === "true") return;
+    form.dataset.submitting = "true";
+
     const currentUserId = activeUser.id;
     const currentUserName = activeUser.name || [activeUser.firstName, activeUser.lastName].filter(Boolean).join(" ") || "User";
 
@@ -319,10 +323,11 @@ async function handleProposalSubmit(e) {
         submittedDate: new Date().toISOString().split("T")[0]
     };
 
-    const submitButton = e.currentTarget.querySelector('button[type="submit"]');
+    const submitButton = form.querySelector('button[type="submit"]');
     if (submitButton) submitButton.disabled = true;
     const result = await createProposalRecord(proposal);
     if (!result.success) {
+        form.dataset.submitting = "false";
         if (submitButton) submitButton.disabled = false;
         if (typeof showToast === "function") {
             showToast(result.error?.message || "Unable to submit your proposal. Please sign in and try again.", "error");
@@ -332,13 +337,12 @@ async function handleProposalSubmit(e) {
 
     closeProposalModal();
     if (typeof showToast === "function") {
-        showToast("Proposal submitted successfully!", "success");
+        showToast(result.alreadySubmitted ? "You have already applied for this job." : "Proposal submitted successfully!", result.alreadySubmitted ? "info" : "success");
     }
     window.setTimeout(() => {
         window.location.href = "freelancer/proposals.html";
     }, 600);
 }
-
 /* Freelancers Directory & Profile View */
 function initFreelancersMarketplace() {
     const list = document.getElementById("freelancersList");
