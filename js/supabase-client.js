@@ -18,13 +18,49 @@ function isSupabaseConfigured() {
 let supabaseSdkClient = null;
 let supabaseSdkPromise = null;
 let supabaseSessionRefreshPromise = null;
-let supabaseFreshSessionToken = null;
+let supabaseFreshSessionUserId = null;
 let supabaseFreshSessionUntil = 0;
 
 function rememberFreshSupabaseSession(session) {
-    if (!session?.access_token) return;
-    supabaseFreshSessionToken = session.access_token;
+    if (!session?.user?.id || !session?.access_token) return;
+    supabaseFreshSessionUserId = String(session.user.id);
     supabaseFreshSessionUntil = Date.now() + 45 * 60 * 1000;
+    try {
+        sessionStorage.setItem("skillLinkFreshSessionUserId", supabaseFreshSessionUserId);
+        sessionStorage.setItem("skillLinkFreshSessionUntil", String(supabaseFreshSessionUntil));
+    } catch (error) {
+        console.warn("[SkillLink Auth] Unable to persist session freshness marker.", error);
+    }
+}
+
+function isFreshSupabaseSession(session) {
+    if (!session?.user?.id) return false;
+    if (String(session.user.id) === supabaseFreshSessionUserId && Date.now() < supabaseFreshSessionUntil) return true;
+
+    try {
+        const storedUserId = sessionStorage.getItem("skillLinkFreshSessionUserId");
+        const storedUntil = Number(sessionStorage.getItem("skillLinkFreshSessionUntil") || 0);
+        if (storedUserId && storedUserId === String(session.user.id) && Date.now() < storedUntil) {
+            supabaseFreshSessionUserId = storedUserId;
+            supabaseFreshSessionUntil = storedUntil;
+            return true;
+        }
+    } catch (error) {
+        return false;
+    }
+
+    return false;
+}
+
+function clearFreshSupabaseSession() {
+    supabaseFreshSessionUserId = null;
+    supabaseFreshSessionUntil = 0;
+    try {
+        sessionStorage.removeItem("skillLinkFreshSessionUserId");
+        sessionStorage.removeItem("skillLinkFreshSessionUntil");
+    } catch (error) {
+        console.warn("[SkillLink Auth] Unable to clear session freshness marker.", error);
+    }
 }
 
 function getSupabaseSdkClient() {
@@ -80,11 +116,10 @@ async function getAuthenticatedSessionData(forceRefresh = false) {
         const { data } = await client.auth.getSession();
         const session = data?.session || null;
         if (!session) {
-            supabaseFreshSessionToken = null;
-            supabaseFreshSessionUntil = 0;
+            clearFreshSupabaseSession();
             return null;
         }
-        if (!forceRefresh && session.access_token === supabaseFreshSessionToken && Date.now() < supabaseFreshSessionUntil) {
+        if (!forceRefresh && isFreshSupabaseSession(session)) {
             return session;
         }
 
@@ -143,8 +178,7 @@ const supabaseClient = {
             try {
                 const client = await getSupabaseSdkClient();
                 const result = await client.auth.signOut();
-                supabaseFreshSessionToken = null;
-                supabaseFreshSessionUntil = 0;
+                clearFreshSupabaseSession();
                 return result;
             } catch (error) {
                 return { error };
