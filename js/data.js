@@ -463,7 +463,27 @@ async function createProposalRecord(proposalData) {
             p_delivery_time: String(proposalData.estimatedDuration || "1 week"),
             p_cover_letter: String(proposalData.coverLetter || "")
         });
-        if (error) throw error;
+        if (error) {
+            if (String(error.message || "").includes("409")) {
+                const { data: existingProposals, error: lookupError } = await window.supabaseClient
+                    .from("proposals")
+                    .select("*", {
+                        job_id: String(proposalData.jobId),
+                        freelancer_id: String(session.user.id)
+                    });
+                const existingProposal = Array.isArray(existingProposals) ? existingProposals[0] : null;
+                if (!lookupError && existingProposal) {
+                    const proposal = normalizeProposalRecord(existingProposal);
+                    const proposals = getStoredProposals().filter(entry =>
+                        String(entry.jobId) !== String(proposal.jobId) ||
+                        String(entry.freelancerId) !== String(proposal.freelancerId)
+                    );
+                    saveStoredProposals([...proposals, proposal]);
+                    return { success: true, proposal, alreadySubmitted: true, error: null };
+                }
+            }
+            throw error;
+        }
 
         const proposal = normalizeProposalRecord(data);
         const proposals = getStoredProposals().filter(entry =>
