@@ -6,7 +6,7 @@ SkillLink is a frontend marketplace prototype for freelancers and clients. It us
 - Frontend: HTML, CSS, JavaScript
 - Database: Supabase PostgreSQL
 - Hosting: Render
-- Auth: Supabase Auth (optional later) or local demo mode
+- Auth: Supabase Auth
 
 ## Setup
 
@@ -49,8 +49,3 @@ services:
 ## Notes
 - This app still uses localStorage as a fallback when Supabase is not configured.
 - Your future upgrade path can include Supabase Auth, database writes, and protected rows.
-
-## Demo credentials
-- Freelancer: `freelancer@skilllink.com` / `password123`
-- Client: `client@skilllink.com` / `password123`
-- Admin: `admin@skilllink.com` / `admin123`

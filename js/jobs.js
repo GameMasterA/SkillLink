@@ -16,6 +16,45 @@ const CATEGORY_SVGS = {
     "Marketing": `<svg class="svg-icon" viewBox="0 0 24 24"><line x1="18" y1="20" x2="18" y2="10"></line><line x1="12" y1="20" x2="12" y2="4"></line><line x1="6" y1="20" x2="6" y2="14"></line></svg>`
 };
 
+function normalizeMarketplaceCategory(value) {
+    const category = String(value || "").trim();
+    if (!category) return "Uncategorized";
+
+    const normalized = category.toLowerCase();
+    const aliases = {
+        "web development": "Web Development",
+        "frontend": "Web Development",
+        "backend": "Web Development",
+        "full stack": "Web Development",
+        "full-stack": "Web Development",
+        "mobile app": "Web Development",
+        "ui/ux": "UI/UX Design",
+        "ui ux": "UI/UX Design",
+        "ux/ui": "UI/UX Design",
+        "ux design": "UI/UX Design",
+        "ui design": "UI/UX Design",
+        "graphic design": "Graphic Design",
+        "design": "Graphic Design",
+        "writing": "Writing",
+        "content writing": "Writing",
+        "content": "Writing",
+        "marketing": "Marketing",
+        "seo": "Marketing",
+        "social media": "Marketing",
+        "digital marketing": "Marketing"
+    };
+
+    return aliases[normalized] || category;
+}
+
+function getVisibleJobs() {
+    return getStoredJobs().filter(job => {
+        if (!job || !job.title) return false;
+        const status = String(job.status || "open").toLowerCase();
+        return status === "open";
+    });
+}
+
 document.addEventListener("DOMContentLoaded", () => {
     renderCategoryStrip();
     initJobsMarketplace();
@@ -29,14 +68,16 @@ function renderCategoryStrip() {
     const container = document.getElementById("categoriesContainer");
     if (!container) return;
 
-    const categories = [
-        { name: "All", iconSvg: CATEGORY_SVGS["All"], count: getStoredJobs().length },
-        { name: "Web Development", iconSvg: CATEGORY_SVGS["Web Development"], count: getStoredJobs().filter(j => j.category === "Web Development").length },
-        { name: "UI/UX Design", iconSvg: CATEGORY_SVGS["UI/UX Design"], count: getStoredJobs().filter(j => j.category === "UI/UX Design").length },
-        { name: "Graphic Design", iconSvg: CATEGORY_SVGS["Graphic Design"], count: getStoredJobs().filter(j => j.category === "Graphic Design").length },
-        { name: "Writing", iconSvg: CATEGORY_SVGS["Writing"], count: getStoredJobs().filter(j => j.category === "Writing").length },
-        { name: "Marketing", iconSvg: CATEGORY_SVGS["Marketing"], count: getStoredJobs().filter(j => j.category === "Marketing").length }
-    ];
+    const visibleJobs = getVisibleJobs();
+    const categoryNames = ["All", ...new Set(visibleJobs.map(job => normalizeMarketplaceCategory(job.category)).filter(Boolean))];
+
+    const categories = categoryNames.map(name => ({
+        name,
+        iconSvg: CATEGORY_SVGS[name] || CATEGORY_SVGS["All"],
+        count: name === "All"
+            ? visibleJobs.length
+            : visibleJobs.filter(job => normalizeMarketplaceCategory(job.category) === name).length
+    }));
 
     container.innerHTML = categories.map(cat => `
         <div class="category-card ${activeCategoryFilter === cat.name ? 'active' : ''}" onclick="selectCategory('${cat.name}')">
@@ -88,7 +129,8 @@ function filterAndRenderJobs() {
     const jobsList = document.getElementById("jobsList");
     if (!jobsList) return;
 
-    let jobs = getStoredJobs().filter(j => j.status === "open");
+    const availableJobs = getVisibleJobs();
+    let jobs = availableJobs.slice();
     const savedIds = getSavedJobIds();
 
     const searchQuery = (document.getElementById("searchInput")?.value || "").toLowerCase().trim();
@@ -107,7 +149,7 @@ function filterAndRenderJobs() {
     }
 
     if (activeCategoryFilter !== "All") {
-        jobs = jobs.filter(j => j.category === activeCategoryFilter);
+        jobs = jobs.filter(j => normalizeMarketplaceCategory(j.category) === normalizeMarketplaceCategory(activeCategoryFilter));
     }
 
     if (budget !== "All") {
@@ -129,7 +171,10 @@ function filterAndRenderJobs() {
     if (countElem) countElem.textContent = `${jobs.length} jobs available`;
 
     if (jobs.length === 0) {
-        jobsList.innerHTML = `<div class="job-glass-card"><p style="color:var(--text-muted);">No matching jobs found.</p></div>`;
+        const emptyMessage = availableJobs.length
+            ? "No jobs match those filters. Try changing your search or filters."
+            : "There are no open jobs right now. Check back soon for new opportunities.";
+        jobsList.innerHTML = `<div class="job-glass-card"><p style="color:var(--text-muted);">${emptyMessage}</p></div>`;
         return;
     }
 
@@ -258,10 +303,12 @@ function initJobDetailsView() {
                 <strong style="color:var(--text-dark);">Client: ${job.client?.name || "Client"}</strong>
                 <p style="font-size:13px; color:var(--text-muted); display:flex; align-items:center; gap:6px; margin-top:2px;">
                     <svg class="svg-icon" viewBox="0 0 24 24" style="width:14px; height:14px; fill:#f59e0b; stroke:#f59e0b;"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
-                    <span>${job.client?.rating || "5.0"}</span> • <span>${job.client?.jobsPosted || 0} jobs posted</span>
+                    <span>${Number(job.client?.rating) > 0 ? Number(job.client.rating).toFixed(1) : "Not rated"}</span> • <span>${Number(job.client?.jobsPosted) || 0} jobs posted</span>
                 </p>
             </div>
-            <button class="btn btn-primary" onclick="openProposalModal()" style="padding:12px 28px;">Apply for this job</button>
+            ${job.status === "open"
+                ? '<button class="btn btn-primary" onclick="openProposalModal()" style="padding:12px 28px;">Apply for this job</button>'
+                : `<span class="status-indicator">${String(job.status || "unavailable").replaceAll("_", " ").toUpperCase()}</span>`}
         </div>
     `;
 
@@ -348,34 +395,58 @@ function initFreelancersMarketplace() {
     const list = document.getElementById("freelancersList");
     if (!list) return;
 
-    const freelancers = typeof getStoredFreelancers === "function" ? getStoredFreelancers() : [];
+    const searchInput = document.getElementById("freelancerSearchInput");
     const escapeForJs = (value = "") => String(value)
         .replace(/\\/g, "\\\\")
         .replace(/'/g, "\\'")
         .replace(/\"/g, '\\"');
-    
-    list.innerHTML = freelancers.map(fl => `
+
+    const renderFreelancers = () => {
+        const freelancers = typeof getStoredFreelancers === "function" ? getStoredFreelancers() : [];
+        const query = String(searchInput?.value || "").trim().toLowerCase();
+        const matches = freelancers.filter(freelancer =>
+            [freelancer.name, freelancer.title, freelancer.bio, ...(freelancer.skills || [])]
+                .join(" ")
+                .toLowerCase()
+                .includes(query)
+        );
+
+        if (!matches.length) {
+            list.innerHTML = `<div class="job-glass-card"><p style="color:var(--text-muted);">${freelancers.length ? "No freelancer profiles match your search." : "No freelancer profiles are available yet."}</p><a class="btn btn-outline btn-sm" href="register.html?role=freelancer" style="margin-top:12px;">Create a freelancer profile</a></div>`;
+            return;
+        }
+
+        list.innerHTML = matches.map(fl => `
         <div class="glass-card" style="padding: 28px; text-align: center;">
             <div style="width: 72px; height: 72px; border-radius: 50%; background: linear-gradient(135deg, var(--primary) 0%, var(--accent-blue) 100%); color: #fff; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; font-weight: 800; margin: 0 auto 16px; box-shadow: 0 8px 20px rgba(2, 132, 199, 0.3);">
                 ${fl.name.charAt(0)}
             </div>
             <h3 style="font-size: 1.2rem; color: var(--text-dark);">${fl.name}</h3>
-            <p style="font-size: 0.85rem; color: var(--primary); font-weight: 600; margin-top: 2px;">${fl.title || "Top Rated Specialist"}</p>
-            <p style="font-size: 0.85rem; color: var(--text-muted); margin-top: 8px; line-height: 1.5;">${fl.bio || "Dedicated freelance expert delivering high precision work."}</p>
+            <p style="font-size: 0.85rem; color: var(--primary); font-weight: 600; margin-top: 2px;">${fl.title || "Title not provided"}</p>
+            <p style="font-size: 0.85rem; color: var(--text-muted); margin-top: 8px; line-height: 1.5;">${fl.bio || "No profile description provided."}</p>
             
             <div style="display:flex; justify-content:center; align-items:center; gap:16px; margin:16px 0; font-size:0.85rem; color:var(--text-muted);">
                 <span style="display:flex; align-items:center; gap:4px;">
                     <svg class="svg-icon" viewBox="0 0 24 24" style="width:14px; height:14px; fill:#f59e0b; stroke:#f59e0b;"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
-                    <strong>${fl.rating || "5.0"}</strong>
+                    <strong>${Number(fl.rating) > 0 ? Number(fl.rating).toFixed(1) : "New"}</strong>
                 </span>
                 <span>•</span>
-                <span>${fl.completedJobs || 12} projects</span>
+                <span>${Number(fl.completedJobs) || 0} projects</span>
             </div>
 
             <button type="button" class="btn btn-primary btn-sm" onclick="openConversationWithUser('${escapeForJs(fl.id)}', '${escapeForJs(fl.name)}')" style="width: 100%; margin-bottom: 10px;">Message</button>
             <a href="freelancer-profile.html?id=${fl.id}" class="btn btn-outline btn-sm" style="width: 100%;">View Profile</a>
         </div>
-    `).join("");
+        `).join("");
+    };
+
+    searchInput?.addEventListener("input", renderFreelancers);
+    renderFreelancers();
+    if (typeof syncFromCloudDatabase === "function") {
+        syncFromCloudDatabase().then(result => {
+            if (result.success) renderFreelancers();
+        });
+    }
 }
 
 function renderFreelancerMessageActions(fl) {
@@ -400,9 +471,18 @@ function initFreelancerProfileView() {
     const params = new URLSearchParams(window.location.search);
     const flId = params.get("id");
     const freelancers = typeof getStoredFreelancers === "function" ? getStoredFreelancers() : [];
-    const fl = freelancers.find(f => f.id === flId) || freelancers[0];
+    const fl = freelancers.find(f => f.id === flId);
 
-    if (!fl) return;
+    if (!fl) {
+        card.innerHTML = `<h1 style="font-size:1.5rem;color:var(--text-dark);">Freelancer profile not found</h1><p style="color:var(--text-muted);margin-top:8px;">This profile may no longer be available.</p><a href="freelancers.html" class="btn btn-outline" style="margin-top:16px;">Browse freelancers</a>`;
+        if (flId && !card.dataset.cloudRefreshAttempted && typeof syncFromCloudDatabase === "function") {
+            card.dataset.cloudRefreshAttempted = "true";
+            syncFromCloudDatabase().then(result => {
+                if (result.success) initFreelancerProfileView();
+            });
+        }
+        return;
+    }
 
     card.innerHTML = `
         <div style="display:flex; gap:24px; align-items:center; flex-wrap:wrap;">
@@ -411,23 +491,23 @@ function initFreelancerProfileView() {
             </div>
             <div>
                 <h1 style="font-size: 1.8rem; color: var(--text-dark);">${fl.name}</h1>
-                <p style="color: var(--primary); font-weight: 600; font-size: 1.05rem;">${fl.title || "Full Stack Professional"}</p>
+                <p style="color: var(--primary); font-weight: 600; font-size: 1.05rem;">${fl.title || "Title not provided"}</p>
                 <p style="color: var(--text-muted); font-size: 0.9rem; margin-top: 4px; display:flex; align-items:center; gap:8px;">
                     <svg class="svg-icon" viewBox="0 0 24 24" style="width:14px; height:14px; fill:#f59e0b; stroke:#f59e0b;"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
-                    <span>${fl.rating || "5.0"} rating</span> • <span>${fl.completedJobs || 24} jobs completed</span>
+                    <span>${Number(fl.rating) > 0 ? Number(fl.rating).toFixed(1) : "New"} rating</span> • <span>${Number(fl.completedJobs) || 0} jobs completed</span>
                 </p>
             </div>
         </div>
 
         <div style="margin-top:28px;">
             <h3 style="font-size:1.1rem; color:var(--text-dark); margin-bottom:8px;">About</h3>
-            <p style="color:var(--text-muted); line-height:1.6;">${fl.bio || "Experienced specialist with a strong background in developing scalable applications and user experiences."}</p>
+            <p style="color:var(--text-muted); line-height:1.6;">${fl.bio || "No profile description has been added yet."}</p>
         </div>
 
         <div style="margin-top:24px;">
             <h3 style="font-size:1.1rem; color:var(--text-dark); margin-bottom:10px;">Core Skills</h3>
             <div class="skill-tags">
-                ${(fl.skills || ["JavaScript", "HTML/CSS", "UI Design"]).map(s => `<span class="skill-tag">${s}</span>`).join("")}
+                ${(fl.skills || []).length ? fl.skills.map(s => `<span class="skill-tag">${s}</span>`).join("") : "<span>No skills listed yet.</span>"}
             </div>
         </div>
 

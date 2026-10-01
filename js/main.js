@@ -28,6 +28,17 @@ function initAppCore() {
  * Apple-Inspired Liquid Glass Toast Notification System (Pure SVG Icons)
  */
 function showToast(message, type = 'info', duration = 3500) {
+    const messageKey = `${type}:${String(message || '').replace(/\s+/g, ' ').trim()}`;
+    if (!messageKey) return;
+
+    if (!window.__skillLinkToastMap) {
+        window.__skillLinkToastMap = new Map();
+    }
+    if (window.__skillLinkToastMap.has(messageKey)) {
+        return;
+    }
+    window.__skillLinkToastMap.set(messageKey, true);
+
     let container = document.getElementById('toastContainer');
     if (!container) {
         container = document.createElement('div');
@@ -87,7 +98,12 @@ function showToast(message, type = 'info', duration = 3500) {
 
     setTimeout(() => {
         toast.classList.add('fade-out');
-        setTimeout(() => toast.remove(), 300);
+        setTimeout(() => {
+            toast.remove();
+            if (window.__skillLinkToastMap) {
+                window.__skillLinkToastMap.delete(messageKey);
+            }
+        }, 300);
     }, duration);
 }
 

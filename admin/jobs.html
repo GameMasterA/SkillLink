@@ -99,25 +99,10 @@
                                     <th>Client</th>
                                     <th>Category</th>
                                     <th>Budget Range</th>
-                                    <th>Actions</th>
+                                    <th>Status</th>
                                 </tr>
                             </thead>
-                            <tbody>
-                                <tr>
-                                    <td><strong>Job Listing</strong></td>
-                                    <td>Client</td>
-                                    <td>Web Development</td>
-                                    <td>₦0 – ₦0</td>
-                                    <td><button onclick="if(typeof showToast==='function') showToast('No listings yet.', 'info');" class="btn btn-outline btn-sm">Awaiting Listing</button></td>
-                                </tr>
-                                <tr>
-                                    <td><strong>No Active Postings</strong></td>
-                                    <td>Client</td>
-                                    <td>—</td>
-                                    <td>₦0 – ₦0</td>
-                                    <td><button onclick="if(typeof showToast==='function') showToast('No listings yet.', 'info');" class="btn btn-outline btn-sm">Awaiting Listing</button></td>
-                                </tr>
-                            </tbody>
+                            <tbody id="adminJobsTable"></tbody>
                         </table>
                     </div>
                 </div>

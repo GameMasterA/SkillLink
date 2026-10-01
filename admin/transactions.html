@@ -89,15 +89,15 @@
                 <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 20px; margin-bottom: 28px;">
                     <div class="glass-card" style="padding: 20px; border-radius: var(--radius-lg);">
                         <span style="font-size: 0.85rem; color: var(--text-muted); font-weight: 600;">Total Platform Volume</span>
-                        <div style="font-size: 1.8rem; font-weight: 800; color: var(--text-dark); margin-top: 6px;">₦16,900,000</div>
+                        <div id="adminTransactionVolume" style="font-size: 1.8rem; font-weight: 800; color: var(--text-dark); margin-top: 6px;">₦0</div>
                     </div>
                     <div class="glass-card" style="padding: 20px; border-radius: var(--radius-lg);">
                         <span style="font-size: 0.85rem; color: var(--text-muted); font-weight: 600;">Platform Fee Earned (5%)</span>
-                        <div style="font-size: 1.8rem; font-weight: 800; color: var(--accent-rose); margin-top: 6px;">₦845,000</div>
+                        <div id="adminTransactionFees" style="font-size: 1.8rem; font-weight: 800; color: var(--accent-rose); margin-top: 6px;">₦0</div>
                     </div>
                     <div class="glass-card" style="padding: 20px; border-radius: var(--radius-lg);">
                         <span style="font-size: 0.85rem; color: var(--text-muted); font-weight: 600;">Total Withdrawals Processed</span>
-                        <div style="font-size: 1.8rem; font-weight: 800; color: var(--accent-emerald); margin-top: 6px;">₦12,450,000</div>
+                        <div id="adminTransactionWithdrawals" style="font-size: 1.8rem; font-weight: 800; color: var(--accent-emerald); margin-top: 6px;">₦0</div>
                     </div>
                 </div>
 
@@ -115,24 +115,7 @@
                                     <th>Status</th>
                                 </tr>
                             </thead>
-                            <tbody>
-                                <tr>
-                                    <td>#TX-88412</td>
-                                    <td><span class="status-indicator">ESCROW</span></td>
-                                    <td>Deposit — SaaS Landing Portal</td>
-                                    <td>₦0</td>
-                                    <td>₦6,000</td>
-                                    <td>Completed</td>
-                                </tr>
-                                <tr>
-                                    <td>#TX-88390</td>
-                                    <td><span class="status-indicator">EARNING</span></td>
-                                    <td>Payment Release — Corporate Website</td>
-                                    <td>₦180,000</td>
-                                    <td>₦9,000</td>
-                                    <td>Completed</td>
-                                </tr>
-                            </tbody>
+                            <tbody id="adminTransactionsTable"></tbody>
                         </table>
                     </div>
                 </div>

@@ -229,22 +229,24 @@ function saveStoredJobs(jobs) {
 }
 
 function normalizeFreelancerRecord(profile = {}) {
-    const name = profile.name || [profile.first_name, profile.last_name].filter(Boolean).join(" ") || "Freelancer";
-    const title = profile.title || profile.primary_skill || profile.skill || "Freelance Specialist";
+    const name = profile.name || [profile.first_name, profile.last_name].filter(Boolean).join(" ") || "Member";
+    const title = profile.title || profile.primary_skill || profile.skill || "";
     const skills = Array.isArray(profile.skills) && profile.skills.length > 0
         ? profile.skills
-        : (profile.primary_skill ? [profile.primary_skill] : ["Web Development"]);
+        : (profile.primary_skill ? [profile.primary_skill] : []);
+    const reviewsCount = Number(profile.reviews_count ?? profile.reviewsCount ?? 0);
+    const rating = reviewsCount > 0 ? Number(profile.rating ?? 0) : 0;
 
     return {
         id: profile.id || `freelancer-${Date.now()}`,
         name,
         title,
-        rating: Number(profile.rating ?? 5.0),
-        reviewsCount: Number(profile.reviews_count ?? profile.reviewsCount ?? 0),
+        rating,
+        reviewsCount,
         completedJobs: Number(profile.completed_jobs ?? profile.completedJobs ?? 0),
         startingPrice: Number(profile.starting_price ?? profile.startingPrice ?? 0),
-        category: profile.primary_skill || profile.category || "Web Development",
-        bio: profile.bio || "New freelancer profile ready for work.",
+        category: profile.primary_skill || profile.category || "",
+        bio: profile.bio || "",
         skills,
         availability: profile.availability || "Available Now",
         email: profile.email || "",
@@ -270,9 +272,9 @@ function syncFreelancersFromUsers() {
             ...user,
             id: user.id,
             name: user.name || [user.firstName, user.lastName].filter(Boolean).join(" ") || "Freelancer",
-            title: user.title || user.primarySkill || user.skill || "Freelance Specialist",
-            primary_skill: user.primarySkill || user.primary_skill || user.skill || "Web Development",
-            rating: user.rating ?? 5.0,
+            title: user.title || user.primarySkill || user.skill || "",
+            primary_skill: user.primarySkill || user.primary_skill || user.skill || "",
+            rating: user.rating ?? 0,
             reviews_count: user.reviewsCount ?? user.reviews_count ?? 0,
             completed_jobs: user.completedJobs ?? user.completed_jobs ?? 0,
             starting_price: user.startingPrice ?? user.starting_price ?? 0,

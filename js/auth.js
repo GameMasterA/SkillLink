@@ -339,6 +339,8 @@ function hydrateClientSettingsForm() {
 
     const companyField = document.getElementById("clientCompanyName");
     if (companyField) companyField.value = user.company || "";
+    const emailField = document.getElementById("clientSettingsEmail");
+    if (emailField) emailField.value = user.email || "";
 }
 
 function hydrateFreelancerSettingsForm() {
@@ -347,6 +349,8 @@ function hydrateFreelancerSettingsForm() {
 
     const emailField = document.getElementById("freelancerEmail");
     if (emailField) emailField.value = user.email || "";
+    const titleField = document.getElementById("freelancerTitle");
+    if (titleField) titleField.value = user.title || user.primarySkill || "";
 }
 
 async function handleProfileSaveSubmit(e) {
@@ -494,7 +498,7 @@ async function handleRegisterSubmit(e) {
                 name: `${firstName} ${lastName}`,
                 title: role === "freelancer" ? (document.getElementById("primarySkill")?.value || "Web Development") : "Client",
                 primarySkill: role === "freelancer" ? (document.getElementById("primarySkill")?.value || "Web Development") : null,
-                company: role === "client" ? (document.getElementById("companyName")?.value.trim() || "Independent Client") : null,
+                company: role === "client" ? (document.getElementById("companyName")?.value.trim() || null) : null,
                 startingPrice: role === "freelancer" ? 45000 : 0,
                 availability: "Available Now",
                 createdAt: new Date().toISOString()
@@ -513,7 +517,7 @@ async function handleRegisterSubmit(e) {
                 starting_price: localUserMirror.startingPrice,
                 completed_jobs: role === "freelancer" ? 0 : 0,
                 jobs_posted: role === "client" ? 0 : 0,
-                rating: 5.0,
+                rating: 0,
                 reviews_count: 0,
                 availability: localUserMirror.availability,
                 created_at: localUserMirror.createdAt
@@ -563,7 +567,7 @@ async function createMissingProfileForAuthUser(userEmail, userId, fallbackRole =
             name: (userEmail || "User").split("@")[0] || "User",
             title: fallbackRole === "client" ? "Client" : "Freelancer",
             bio: "",
-            company: fallbackRole === "client" ? "Independent Client" : null,
+            company: null,
             skills: [],
             primary_skill: fallbackRole === "client" ? null : "Web Development",
             starting_price: fallbackRole === "client" ? 0 : 45000,

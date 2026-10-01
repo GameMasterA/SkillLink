@@ -614,47 +614,185 @@ function initAdminDashboard() {
         enforceRoleAccess("admin");
     }
 
-    renderAdminStats();
-    renderAdminUsersTable();
+    loadAdminRecords().then(records => {
+        renderAdminStats(records);
+        renderAdminUsersTable(records.users);
+        renderAdminJobsTable(records.jobs, records.users);
+        renderAdminProjectsTable(records.projects, records.users);
+        renderAdminTransactions(records.transactions);
+        renderAdminReports(records.jobs, records.projects);
+    });
 }
 
-function renderAdminStats() {
-    const users = typeof getUsers === "function" ? getUsers() : [];
-    const jobs = typeof getStoredJobs === "function" ? getStoredJobs() : [];
-    const projects = typeof getStoredProjects === "function" ? getStoredProjects() : [];
+async function loadAdminRecords() {
+    const records = {
+        users: typeof getUsers === "function" ? getUsers() : [],
+        jobs: typeof getStoredJobs === "function" ? getStoredJobs() : [],
+        projects: typeof getStoredProjects === "function" ? getStoredProjects() : [],
+        transactions: typeof getStoredTransactions === "function" ? getStoredTransactions() : []
+    };
+
+    await window.supabaseBootstrapPromise;
+    if (!(window.isSupabaseConfigured && window.isSupabaseConfigured()) || !window.supabaseClient) return records;
+
+    const [usersResult, jobsResult, projectsResult, transactionsResult] = await Promise.all([
+        window.supabaseClient.from("profiles").select("*"),
+        window.supabaseClient.from("jobs").select("*"),
+        window.supabaseClient.from("projects").select("*"),
+        window.supabaseClient.from("transactions").select("*")
+    ]);
+
+    if (Array.isArray(usersResult.data)) records.users = usersResult.data;
+    if (Array.isArray(jobsResult.data)) records.jobs = jobsResult.data.map(normalizeJobRecord);
+    if (Array.isArray(projectsResult.data)) records.projects = projectsResult.data.map(normalizeProjectRecord);
+    if (Array.isArray(transactionsResult.data)) records.transactions = transactionsResult.data.map(normalizeTransactionRecord);
+    return records;
+}
+
+function formatAdminCurrency(amount) {
+    return new Intl.NumberFormat("en-NG", {
+        style: "currency",
+        currency: "NGN",
+        maximumFractionDigits: 0
+    }).format(Number(amount) || 0);
+}
+
+function formatAdminDate(value) {
+    const timestamp = Date.parse(value || "");
+    return Number.isFinite(timestamp) ? new Intl.DateTimeFormat("en-NG", { dateStyle: "medium" }).format(timestamp) : "—";
+}
+
+function renderAdminStats(records = {}) {
+    const users = records.users || [];
+    const jobs = records.jobs || [];
+    const projects = records.projects || [];
+    const transactions = records.transactions || [];
+    const activeStatuses = new Set(["pending", "in_progress", "review", "active"]);
+    const completedPayments = transactions.filter(transaction =>
+        transaction.status === "completed" && ["payment", "escrow_release"].includes(transaction.type)
+    );
+    const platformFee = completedPayments.reduce((total, transaction) => total + Number(transaction.amount || 0) * 0.05, 0);
 
     const elemUsers = document.getElementById("adminStatTotalUsers");
-    if (elemUsers) elemUsers.textContent = users.length + 42;
+    if (elemUsers) elemUsers.textContent = users.length;
 
     const elemJobs = document.getElementById("adminStatTotalJobs");
-    if (elemJobs) elemJobs.textContent = jobs.length + 120;
+    if (elemJobs) elemJobs.textContent = jobs.length;
 
     const elemProjects = document.getElementById("adminStatProjects");
-    if (elemProjects) elemProjects.textContent = projects.length + 85;
+    if (elemProjects) elemProjects.textContent = projects.filter(project => activeStatuses.has(project.status)).length;
 
     const elemRevenue = document.getElementById("adminStatPlatformRevenue");
-    if (elemRevenue) elemRevenue.textContent = typeof formatCurrency === "function" ? formatCurrency(845000) : "₦845,000";
+    if (elemRevenue) elemRevenue.textContent = formatAdminCurrency(platformFee);
 }
 
-function renderAdminUsersTable() {
+function renderAdminUsersTable(users = (typeof getUsers === "function" ? getUsers() : [])) {
     const table = document.getElementById("adminUsersTable");
     if (!table) return;
 
-    const users = typeof getUsers === "function" ? getUsers() : [];
-    table.innerHTML = users.map(u => `
+    if (!users.length) {
+        table.innerHTML = '<tr><td colspan="5">No registered accounts found.</td></tr>';
+        return;
+    }
+
+    const sortedUsers = users.slice().sort((first, second) => Date.parse(second.created_at || second.createdAt || 0) - Date.parse(first.created_at || first.createdAt || 0));
+    const dashboard = Boolean(document.getElementById("adminStatTotalUsers"));
+    const displayedUsers = dashboard ? sortedUsers.slice(0, 6) : sortedUsers;
+    table.innerHTML = displayedUsers.map(user => `
         <tr>
-            <td><strong>${u.name || `${u.firstName || ""} ${u.lastName || ""}`.trim() || "User"}</strong></td>
-            <td>${u.email}</td>
-            <td><span class="status-indicator">${(u.role || "user").toUpperCase()}</span></td>
-            <td><span class="badge badge-success">ACTIVE</span></td>
-            <td>
-                <div style="display:flex; gap:8px; flex-wrap:wrap;">
-                    <button onclick="if(typeof showToast === 'function') showToast('User privileges updated', 'info')" class="btn btn-outline btn-sm">Manage</button>
-                    <button onclick="deleteUserAccount('${u.id}'); renderAdminUsersTable();" class="btn btn-outline btn-sm" style="border-color: rgba(239,68,68,0.5); color: #dc2626;">Delete</button>
-                </div>
-            </td>
+            <td><strong>${escapeDashboardText(user.name || `${user.first_name || user.firstName || ""} ${user.last_name || user.lastName || ""}`.trim() || "User")}</strong></td>
+            <td>${escapeDashboardText(user.email || "")}</td>
+            <td><span class="status-indicator">${escapeDashboardText((user.role || "user").toUpperCase())}</span></td>
+            <td><span class="badge badge-success">${escapeDashboardText(user.status ? user.status.toUpperCase() : "REGISTERED")}</span></td>
+            <td>${formatAdminDate(user.created_at || user.createdAt)}</td>
         </tr>
     `).join("");
+}
+
+function renderAdminJobsTable(jobs = [], users = []) {
+    const table = document.getElementById("adminJobsTable");
+    if (!table) return;
+    if (!jobs.length) {
+        table.innerHTML = '<tr><td colspan="5">No job postings found.</td></tr>';
+        return;
+    }
+
+    const usersById = new Map(users.map(user => [String(user.id), user]));
+    table.innerHTML = jobs.map(job => {
+        const client = usersById.get(String(job.clientId || job.client_id));
+        const clientName = job.client?.name && job.client.name !== "Client"
+            ? job.client.name
+            : client?.name || [client?.first_name, client?.last_name].filter(Boolean).join(" ") || job.client_name || "Account unavailable";
+        return `<tr><td><strong>${escapeDashboardText(job.title)}</strong></td><td>${escapeDashboardText(clientName)}</td><td>${escapeDashboardText(job.category)}</td><td>${formatAdminCurrency(job.budgetMin ?? job.budget_min)} – ${formatAdminCurrency(job.budgetMax ?? job.budget_max)}</td><td><span class="status-indicator">${escapeDashboardText(String(job.status || "open").replaceAll("_", " ").toUpperCase())}</span></td></tr>`;
+    }).join("");
+}
+
+function renderAdminProjectsTable(projects = [], users = []) {
+    const table = document.getElementById("adminProjectsTable");
+    if (!table) return;
+    if (!projects.length) {
+        table.innerHTML = '<tr><td colspan="5">No contracts found.</td></tr>';
+        return;
+    }
+
+    const usersById = new Map(users.map(user => [String(user.id), user]));
+    const profileName = profile => profile?.name || [profile?.first_name, profile?.last_name].filter(Boolean).join(" ") || "Account unavailable";
+    table.innerHTML = projects.map(project => {
+        const client = usersById.get(String(project.clientId || project.client_id));
+        const freelancer = usersById.get(String(project.freelancerId || project.freelancer_id));
+        const clientName = project.clientName && project.clientName !== "Client" ? project.clientName : profileName(client);
+        const freelancerName = project.freelancerName && project.freelancerName !== "Freelancer" ? project.freelancerName : profileName(freelancer);
+        return `<tr><td><strong>${escapeDashboardText(project.jobTitle || project.title)}</strong></td><td>${escapeDashboardText(clientName)}</td><td>${escapeDashboardText(freelancerName)}</td><td>${formatAdminCurrency(project.amount)}</td><td><span class="status-indicator">${escapeDashboardText(String(project.status || "pending").replaceAll("_", " ").toUpperCase())}</span></td></tr>`;
+    }).join("");
+}
+
+function renderAdminTransactions(transactions = []) {
+    const completed = transactions.filter(transaction => transaction.status === "completed");
+    const payments = completed.filter(transaction => ["payment", "escrow_release"].includes(transaction.type));
+    const volume = payments.reduce((total, transaction) => total + Number(transaction.amount || 0), 0);
+    const fees = volume * 0.05;
+    const withdrawals = completed.filter(transaction => transaction.type === "withdrawal")
+        .reduce((total, transaction) => total + Number(transaction.amount || 0), 0);
+    const volumeElement = document.getElementById("adminTransactionVolume");
+    const feeElement = document.getElementById("adminTransactionFees");
+    const withdrawalsElement = document.getElementById("adminTransactionWithdrawals");
+    if (volumeElement) volumeElement.textContent = formatAdminCurrency(volume);
+    if (feeElement) feeElement.textContent = formatAdminCurrency(fees);
+    if (withdrawalsElement) withdrawalsElement.textContent = formatAdminCurrency(withdrawals);
+
+    const table = document.getElementById("adminTransactionsTable");
+    if (!table) return;
+    if (!transactions.length) {
+        table.innerHTML = '<tr><td colspan="6">No transactions found.</td></tr>';
+        return;
+    }
+    table.innerHTML = transactions.slice().sort((first, second) => Date.parse(second.createdAt || 0) - Date.parse(first.createdAt || 0)).map(transaction => `
+        <tr><td>${escapeDashboardText(transaction.id || "-")}</td><td><span class="status-indicator">${escapeDashboardText(String(transaction.type || "transaction").replaceAll("_", " ").toUpperCase())}</span></td><td>${escapeDashboardText(transaction.title || transaction.reference || transaction.type || "Transaction")}</td><td>${formatAdminCurrency(transaction.amount)}</td><td>${transaction.status === "completed" && ["payment", "escrow_release"].includes(transaction.type) ? formatAdminCurrency(Number(transaction.amount || 0) * 0.05) : formatAdminCurrency(0)}</td><td>${escapeDashboardText(String(transaction.status || "pending").toUpperCase())}</td></tr>
+    `).join("");
+}
+
+function renderAdminReports(jobs = [], projects = []) {
+    const categoryRoot = document.getElementById("adminReportCategories");
+    const completionElement = document.getElementById("adminReportCompletionRate");
+    const hiringElement = document.getElementById("adminReportAverageHireTime");
+    if (categoryRoot) {
+        const counts = jobs.reduce((result, job) => result.set(job.category || "Uncategorized", (result.get(job.category || "Uncategorized") || 0) + 1), new Map());
+        const categories = [...counts.entries()].sort((first, second) => second[1] - first[1]).slice(0, 5);
+        categoryRoot.innerHTML = categories.length ? categories.map(([category, count]) => {
+            const percentage = Math.round(count / jobs.length * 100);
+            return `<div><div style="display:flex;justify-content:space-between;font-size:0.85rem;margin-bottom:6px"><span style="font-weight:600">${escapeDashboardText(category)}</span><span style="font-weight:700">${percentage}%</span></div><div style="width:100%;height:8px;background:rgba(0,0,0,0.06);border-radius:4px;overflow:hidden"><div style="width:${percentage}%;height:100%;background:var(--primary);border-radius:4px"></div></div></div>`;
+        }).join("") : "<p>No job category data available.</p>";
+    }
+
+    const completedProjects = projects.filter(project => project.status === "completed").length;
+    if (completionElement) completionElement.textContent = projects.length ? `${(completedProjects / projects.length * 100).toFixed(1)}%` : "—";
+    const jobDates = new Map(jobs.map(job => [String(job.id), Date.parse(job.created_at || job.postedTimestamp || "")]));
+    const durations = projects.map(project => {
+        const postedAt = jobDates.get(String(project.jobId || project.job_id));
+        const startedAt = Date.parse(project.createdAt || project.created_at || "");
+        return Number.isFinite(postedAt) && Number.isFinite(startedAt) && startedAt >= postedAt ? (startedAt - postedAt) / 86400000 : null;
+    }).filter(duration => duration !== null);
+    if (hiringElement) hiringElement.textContent = durations.length ? `${(durations.reduce((total, duration) => total + duration, 0) / durations.length).toFixed(1)} days` : "—";
 }
 
 // Window scope exports
@@ -662,3 +800,8 @@ window.initDashboardCore = initDashboardCore;
 window.renderFreelancerStats = renderFreelancerStats;
 window.renderClientStats = renderClientStats;
 window.renderAdminStats = renderAdminStats;
+window.renderAdminUsersTable = renderAdminUsersTable;
+window.renderAdminJobsTable = renderAdminJobsTable;
+window.renderAdminProjectsTable = renderAdminProjectsTable;
+window.renderAdminTransactions = renderAdminTransactions;
+window.renderAdminReports = renderAdminReports;

@@ -79,9 +79,13 @@ async function getAuthenticatedUserId() {
 async function ensureCloudMessagingSession() {
     const authUserId = await getAuthenticatedUserId();
     if (!authUserId) {
+        const localUser = getActiveUser();
+        if (localUser?.id) {
+            return { supported: false, userId: String(localUser.id), error: null, localOnly: true };
+        }
         return { supported: false, userId: null, error: new Error("Cloud messaging requires an authenticated Supabase session.") };
     }
-    return { supported: true, userId: authUserId, error: null };
+    return { supported: true, userId: authUserId, error: null, localOnly: false };
 }
 
 function mapCloudMessage(row, conversation) {
@@ -159,6 +163,7 @@ async function syncCloudInbox() {
         }
         return;
     }
+    cloudSessionNoticeShown = false;
     const [incoming, outgoing] = await Promise.all([
         client.from("messages").select("id,sender_id,receiver_id,content,is_read,created_at", { receiver_id: String(activeUser.id) }),
         client.from("messages").select("id,sender_id,receiver_id,content,is_read,created_at", { sender_id: String(activeUser.id) })
@@ -206,8 +211,7 @@ async function syncCloudInbox() {
         const cloudMessages = otherRows.map(row => mapCloudMessage(row, conversation));
         const localOnly = (conversation.messages || []).filter(message => !message.cloudSynced &&
             !cloudMessages.some(cloudMessage => String(cloudMessage.id) === String(message.id)));
-        conversation.messages = [...cloudMessages, ...localOnly]
-            .sort((a, b) => Date.parse(a.timestamp) - Date.parse(b.timestamp));
+        conversation.messages = sortConversationMessages([...cloudMessages, ...localOnly]);
         const latest = conversation.messages[conversation.messages.length - 1];
         if (latest) {
             conversation.lastMessage = latest.text;
@@ -264,12 +268,21 @@ async function markCloudMessagesRead(conversation, userId) {
     return { supported: true, error: error || null };
 }
 
+function sortConversationMessages(messages = []) {
+    return [...messages].sort((a, b) => {
+        const timeA = Date.parse(a?.timestamp || 0) || 0;
+        const timeB = Date.parse(b?.timestamp || 0) || 0;
+        return timeA - timeB;
+    });
+}
+
 function saveConversationMessages(conversationId, messages) {
     const conversations = typeof getStoredMessages === "function" ? getStoredMessages() : [];
     const index = conversations.findIndex(entry => entry.conversationId === conversationId);
     if (index < 0) return;
-    conversations[index].messages = messages;
-    const latest = messages[messages.length - 1];
+    const sortedMessages = sortConversationMessages(messages);
+    conversations[index].messages = sortedMessages;
+    const latest = sortedMessages[sortedMessages.length - 1];
     if (latest) {
         conversations[index].lastMessage = latest.text;
         conversations[index].lastTimestamp = latest.timestamp;
@@ -664,7 +677,7 @@ function renderChatThread() {
     const otherParticipant = getConversationParticipant(conv, activeUser.id) || conv.participants[0];
     if (headerTitle) headerTitle.textContent = otherParticipant.name;
 
-    const conversationMessages = Array.isArray(conv.messages) ? conv.messages : [];
+    const conversationMessages = sortConversationMessages(Array.isArray(conv.messages) ? conv.messages : []);
     if (conversationMessages.length === 0) {
         messagesBody.innerHTML = `<div style="padding:40px; text-align:center; color:var(--text-muted);">No messages yet. Send the first message to ${escapeMessageHtml(otherParticipant.name)}.</div>`;
         return;
@@ -701,13 +714,15 @@ async function handleSendMessageSubmit(e) {
     }
     const conversations = typeof getStoredMessages === "function" ? getStoredMessages() : [];
     const sessionState = await ensureCloudMessagingSession();
-    if (getCloudMessagesClient() && (!sessionState.supported || String(sessionState.userId) !== String(activeUser.id))) {
+    const hasValidCloudSession = !!sessionState.supported && String(sessionState.userId) === String(activeUser.id);
+
+    if (!hasValidCloudSession && !sessionState.localOnly && getCloudMessagesClient()) {
         if (typeof showToast === "function") {
             showToast("Your cloud session expired. Sign in again before sending messages.", "error");
         }
         return;
     }
-    const safeSenderId = sessionState.supported ? String(sessionState.userId) : String(activeUser.id);
+    const safeSenderId = hasValidCloudSession ? String(sessionState.userId) : String(activeUser.id);
 
     const convIndex = conversations.findIndex(c => c.conversationId === activeConversationId);
     if (convIndex !== -1) {
@@ -735,7 +750,7 @@ async function handleSendMessageSubmit(e) {
             isRead: false
         };
 
-        const cloudResult = sessionState.supported ? await persistCloudMessage(newMessage, recipient.id) : { supported: false, message: null, error: null };
+        const cloudResult = hasValidCloudSession ? await persistCloudMessage(newMessage, recipient.id) : { supported: false, message: null, error: null };
         if (cloudResult.supported && cloudResult.error) {
             if (sendButton) sendButton.disabled = false;
             if (typeof showToast === "function") {
@@ -750,8 +765,9 @@ async function handleSendMessageSubmit(e) {
             newMessage.timestamp = cloudResult.message.created_at || timestamp;
             newMessage.cloudSynced = true;
         }
-        conversation.messages = Array.isArray(conversation.messages) ? conversation.messages : [];
+        conversation.messages = sortConversationMessages(Array.isArray(conversation.messages) ? conversation.messages : []);
         conversation.messages.push(newMessage);
+        conversation.messages = sortConversationMessages(conversation.messages);
         conversation.lastMessage = text;
         conversation.lastTimestamp = timestamp;
         if (typeof saveStoredMessages === "function") saveStoredMessages(conversations);

@@ -23,7 +23,7 @@ create table if not exists public.profiles (
     starting_price numeric default 0,
     completed_jobs integer default 0,
     jobs_posted integer default 0,
-    rating numeric default 5.0,
+    rating numeric default 0,
     reviews_count integer default 0,
     availability text default 'Available Now',
     created_at timestamp with time zone default timezone('utc'::text, now()) not null
