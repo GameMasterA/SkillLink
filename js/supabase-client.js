@@ -18,6 +18,14 @@ function isSupabaseConfigured() {
 let supabaseSdkClient = null;
 let supabaseSdkPromise = null;
 let supabaseSessionRefreshPromise = null;
+let supabaseFreshSessionToken = null;
+let supabaseFreshSessionUntil = 0;
+
+function rememberFreshSupabaseSession(session) {
+    if (!session?.access_token) return;
+    supabaseFreshSessionToken = session.access_token;
+    supabaseFreshSessionUntil = Date.now() + 45 * 60 * 1000;
+}
 
 function getSupabaseSdkClient() {
     if (supabaseSdkClient) return Promise.resolve(supabaseSdkClient);
@@ -33,7 +41,7 @@ function getSupabaseSdkClient() {
                 supabaseSdkClient = window.supabase.createClient(SUPABASE_CONFIG.URL, SUPABASE_CONFIG.ANON_KEY, {
                     auth: {
                         persistSession: true,
-                        autoRefreshToken: true,
+                        autoRefreshToken: false,
                         detectSessionInUrl: true
                     }
                 });
@@ -59,27 +67,49 @@ function getSupabaseSdkClient() {
 async function getAuthenticatedSessionData(forceRefresh = false) {
     try {
         const client = await getSupabaseSdkClient();
+        let refreshAttempted = false;
         if (supabaseSessionRefreshPromise) {
+            refreshAttempted = true;
             const refreshedSession = await supabaseSessionRefreshPromise;
-            if (refreshedSession) return refreshedSession;
+            if (refreshedSession) {
+                rememberFreshSupabaseSession(refreshedSession);
+                return refreshedSession;
+            }
         }
 
         const { data } = await client.auth.getSession();
         const session = data?.session || null;
-        const expiresAt = Number(session?.expires_at || 0) * 1000;
-        if (session && client.auth.refreshSession && (forceRefresh || (expiresAt > 0 && expiresAt <= Date.now() + 60000))) {
-            if (!supabaseSessionRefreshPromise) {
-                supabaseSessionRefreshPromise = client.auth.refreshSession()
-                    .then(refreshed => refreshed.error ? null : (refreshed.data?.session || null))
-                    .catch(() => null)
-                    .finally(() => { supabaseSessionRefreshPromise = null; });
+        if (!session) {
+            supabaseFreshSessionToken = null;
+            supabaseFreshSessionUntil = 0;
+            return null;
+        }
+        if (!forceRefresh && session.access_token === supabaseFreshSessionToken && Date.now() < supabaseFreshSessionUntil) {
+            return session;
+        }
+
+        const expiresAt = Number(session.expires_at || 0) * 1000;
+        if (client.auth.refreshSession && (forceRefresh || (expiresAt > 0 && expiresAt <= Date.now() + 60000))) {
+            if (!refreshAttempted) {
+                if (!supabaseSessionRefreshPromise) {
+                    supabaseSessionRefreshPromise = client.auth.refreshSession()
+                        .then(refreshed => refreshed.error ? null : (refreshed.data?.session || null))
+                        .catch(() => null)
+                        .finally(() => { supabaseSessionRefreshPromise = null; });
+                }
+                const refreshedSession = await supabaseSessionRefreshPromise;
+                if (refreshedSession) {
+                    rememberFreshSupabaseSession(refreshedSession);
+                    return refreshedSession;
+                }
             }
-            const refreshedSession = await supabaseSessionRefreshPromise;
-            if (refreshedSession) return refreshedSession;
 
             const currentSession = (await client.auth.getSession())?.data?.session || null;
             const currentExpiry = Number(currentSession?.expires_at || 0) * 1000;
-            if (currentSession && (!currentExpiry || currentExpiry > Date.now())) return currentSession;
+            if (currentSession && (!currentExpiry || currentExpiry > Date.now())) {
+                rememberFreshSupabaseSession(currentSession);
+                return currentSession;
+            }
             return null;
         }
         return session;
@@ -87,13 +117,14 @@ async function getAuthenticatedSessionData(forceRefresh = false) {
         return null;
     }
 }
-
 const supabaseClient = {
     auth: {
         async signUp({ email, password, options = {} }) {
             try {
                 const client = await getSupabaseSdkClient();
-                return await client.auth.signUp({ email, password, options });
+                const result = await client.auth.signUp({ email, password, options });
+                rememberFreshSupabaseSession(result.data?.session);
+                return result;
             } catch (error) {
                 return { data: null, error };
             }
@@ -101,7 +132,9 @@ const supabaseClient = {
         async signInWithPassword({ email, password }) {
             try {
                 const client = await getSupabaseSdkClient();
-                return await client.auth.signInWithPassword({ email, password });
+                const result = await client.auth.signInWithPassword({ email, password });
+                rememberFreshSupabaseSession(result.data?.session);
+                return result;
             } catch (error) {
                 return { data: null, error };
             }
@@ -109,7 +142,10 @@ const supabaseClient = {
         async signOut() {
             try {
                 const client = await getSupabaseSdkClient();
-                return await client.auth.signOut();
+                const result = await client.auth.signOut();
+                supabaseFreshSessionToken = null;
+                supabaseFreshSessionUntil = 0;
+                return result;
             } catch (error) {
                 return { error };
             }
