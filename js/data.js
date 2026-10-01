@@ -440,6 +440,19 @@ function saveStoredProposals(proposals) {
     localStorage.setItem(STORAGE_KEYS.PROPOSALS, JSON.stringify(normalized));
 }
 
+function mergeProposalRecords(existingProposals, incomingProposals) {
+    const proposalsByApplication = new Map();
+    [...existingProposals, ...incomingProposals].forEach(proposal => {
+        const normalized = normalizeProposalRecord(proposal);
+        const key = `${normalized.jobId}:${normalized.freelancerId}`;
+        proposalsByApplication.set(key, {
+            ...proposalsByApplication.get(key),
+            ...normalized
+        });
+    });
+    return [...proposalsByApplication.values()];
+}
+
 async function createProposalRecord(proposalData) {
     await window.supabaseBootstrapPromise;
 
@@ -473,7 +486,7 @@ async function createProposalRecord(proposalData) {
                     });
                 const existingProposal = Array.isArray(existingProposals) ? existingProposals[0] : null;
                 if (!lookupError && existingProposal) {
-                    const proposal = normalizeProposalRecord(existingProposal);
+                    const proposal = normalizeProposalRecord({ ...existingProposal, cloudConfirmed: true });
                     const proposals = getStoredProposals().filter(entry =>
                         String(entry.jobId) !== String(proposal.jobId) ||
                         String(entry.freelancerId) !== String(proposal.freelancerId)
@@ -485,7 +498,7 @@ async function createProposalRecord(proposalData) {
             throw error;
         }
 
-        const proposal = normalizeProposalRecord(data);
+        const proposal = normalizeProposalRecord({ ...data, cloudConfirmed: true });
         const proposals = getStoredProposals().filter(entry =>
             String(entry.jobId) !== String(proposal.jobId) ||
             String(entry.freelancerId) !== String(proposal.freelancerId)
@@ -605,7 +618,7 @@ async function syncAccountWorkData(userId, role) {
         if (failedProposalResult) return { success: false, error: failedProposalResult.error };
         proposals = proposalResults.flatMap(result => result.data || []).map(proposal => {
             const job = jobsById.get(String(proposal.job_id));
-            return normalizeProposalRecord({ ...proposal, job_title: job?.title || "Job Proposal", client_id: userId });
+            return normalizeProposalRecord({ ...proposal, job_title: job?.title || "Job Proposal", client_id: userId, cloudConfirmed: true });
         });
     } else {
         const proposalsResult = await window.supabaseClient.from("proposals").select("*", { [proposalOwnerColumn]: String(userId) });
@@ -614,15 +627,24 @@ async function syncAccountWorkData(userId, role) {
         const jobsById = new Map(jobs.map(job => [String(job.id), job]));
         proposals = (proposalsResult.data || []).map(proposal => {
             const job = jobsById.get(String(proposal.job_id));
-            return normalizeProposalRecord({ ...proposal, job_title: job?.title || "Job Proposal" });
+            return normalizeProposalRecord({ ...proposal, job_title: job?.title || "Job Proposal", cloudConfirmed: true });
         });
     }
 
-    const existingProposals = getStoredProposals().filter(proposal => {
+    const storedProposals = getStoredProposals();
+    const storedJobIds = new Set(getStoredJobs().map(job => String(job.id)));
+    const confirmedLocalProposals = storedProposals.filter(proposal =>
+        proposal.cloudConfirmed &&
+        storedJobIds.has(String(proposal.jobId)) &&
+        (isClient
+            ? relevantJobIds.includes(String(proposal.jobId))
+            : String(proposal.freelancerId) === String(userId))
+    );
+    const existingProposals = storedProposals.filter(proposal => {
         if (isClient) return !relevantJobIds.includes(String(proposal.jobId));
         return String(proposal.freelancerId) !== String(userId);
     });
-    saveStoredProposals([...existingProposals, ...proposals]);
+    saveStoredProposals(mergeProposalRecords([...existingProposals, ...confirmedLocalProposals], proposals));
 
     const existingProjects = getStoredProjects().filter(project => String(project[isClient ? "clientId" : "freelancerId"]) !== String(userId));
     saveStoredProjects([...existingProjects, ...syncedProjects]);
