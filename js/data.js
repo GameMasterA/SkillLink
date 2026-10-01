@@ -460,6 +460,23 @@ function mergeProposalRecords(existingProposals, incomingProposals) {
     return [...proposalsByApplication.values()];
 }
 
+function cacheConfirmedProposal(proposalData) {
+    const job = getStoredJobs().find(entry => String(entry.id) === String(proposalData.job_id || proposalData.jobId));
+    const proposal = normalizeProposalRecord({
+        ...proposalData,
+        job_title: proposalData.job_title || job?.title || "Job Proposal",
+        client_id: proposalData.client_id || job?.clientId || job?.client_id || "",
+        client_name: proposalData.client_name || job?.client?.name || "Client",
+        cloudConfirmed: true
+    });
+    const proposals = getStoredProposals().filter(entry =>
+        String(entry.jobId) !== String(proposal.jobId) ||
+        String(entry.freelancerId) !== String(proposal.freelancerId)
+    );
+    saveStoredProposals([...proposals, proposal]);
+    return proposal;
+}
+
 async function createProposalRecord(proposalData) {
     await window.supabaseBootstrapPromise;
 
@@ -475,6 +492,20 @@ async function createProposalRecord(proposalData) {
         }
         if (String(session.user.id) !== String(proposalData.freelancerId || localUser?.id || "")) {
             throw new Error("Your signed-in Supabase account does not match this freelancer profile. Sign out and sign in again.");
+        }
+
+        const existingResult = await window.supabaseClient.from("proposals").select("*", {
+            job_id: String(proposalData.jobId),
+            freelancer_id: String(session.user.id)
+        });
+        if (existingResult.error) throw existingResult.error;
+        if (Array.isArray(existingResult.data) && existingResult.data[0]) {
+            return {
+                success: true,
+                proposal: cacheConfirmedProposal(existingResult.data[0]),
+                alreadySubmitted: true,
+                error: null
+            };
         }
 
         const { data, error } = await window.supabaseClient.rpc("submit_proposal", {
@@ -493,31 +524,14 @@ async function createProposalRecord(proposalData) {
                     });
                 const existingProposal = Array.isArray(existingProposals) ? existingProposals[0] : null;
                 if (!lookupError && existingProposal) {
-                    const job = getStoredJobs().find(entry => String(entry.id) === String(existingProposal.job_id));
-                    const proposal = normalizeProposalRecord({
-                        ...existingProposal,
-                        job_title: job?.title || "Job Proposal",
-                        client_id: job?.clientId || job?.client_id || "",
-                        client_name: job?.client?.name || "Client",
-                        cloudConfirmed: true
-                    });
-                    const proposals = getStoredProposals().filter(entry =>
-                        String(entry.jobId) !== String(proposal.jobId) ||
-                        String(entry.freelancerId) !== String(proposal.freelancerId)
-                    );
-                    saveStoredProposals([...proposals, proposal]);
+                    const proposal = cacheConfirmedProposal(existingProposal);
                     return { success: true, proposal, alreadySubmitted: true, error: null };
                 }
             }
             throw error;
         }
 
-        const proposal = normalizeProposalRecord({ ...data, cloudConfirmed: true });
-        const proposals = getStoredProposals().filter(entry =>
-            String(entry.jobId) !== String(proposal.jobId) ||
-            String(entry.freelancerId) !== String(proposal.freelancerId)
-        );
-        saveStoredProposals([...proposals, proposal]);
+        const proposal = cacheConfirmedProposal(data);
 
         if (data.proposals_count !== undefined) {
             const jobs = getStoredJobs();
