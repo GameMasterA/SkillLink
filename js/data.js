@@ -65,57 +65,81 @@ function initMarketplaceData() {
         [STORAGE_KEYS.SAVED_JOBS]: []
     };
 
-    const hasLegacyDemoData = () => {
-        const demoMarkers = [
-            "usr-demo-fl",
-            "usr-demo-cl",
-            "John Doe",
-            "Sarah Miller",
-            "Amina Bello",
-            "Ataba O.",
-            "David K.",
-            "Marcus T."
-        ];
-
-        return Object.keys(blankStore).some(key => {
-            try {
-                const currentValue = JSON.parse(localStorage.getItem(key) || "null");
-                if (!Array.isArray(currentValue)) return false;
-                return currentValue.some(item => {
-                    if (!item || typeof item !== "object") return false;
-                    const candidateText = [
-                        item.name,
-                        item.title,
-                        item.clientName,
-                        item.jobTitle,
-                        item.company,
-                        item.email,
-                        item.summary,
-                        item.lastMessage
-                    ].filter(Boolean).join(" ");
-                    return demoMarkers.some(marker => candidateText.includes(marker));
-                });
-            } catch (error) {
-                return false;
-            }
-        });
+    const demoMarkers = [
+        "usr-demo-fl",
+        "usr-demo-cl",
+        "John Doe",
+        "Sarah Miller",
+        "Amina Bello",
+        "Ataba O.",
+        "David K.",
+        "Marcus T."
+    ];
+    const isLegacyDemoRecord = item => {
+        if (!item || typeof item !== "object") return false;
+        const candidateText = [
+            item.id,
+            item.name,
+            item.title,
+            item.clientName,
+            item.client_name,
+            item.jobTitle,
+            item.job_title,
+            item.company,
+            item.email,
+            item.summary,
+            item.lastMessage,
+            item.last_message
+        ].filter(Boolean).join(" ");
+        return demoMarkers.some(marker => candidateText.includes(marker));
     };
 
     Object.entries(blankStore).forEach(([key, value]) => {
         const stored = localStorage.getItem(key);
-        if (!stored || hasLegacyDemoData()) {
+        if (!stored) {
+            localStorage.setItem(key, JSON.stringify(value));
+            return;
+        }
+
+        try {
+            const records = JSON.parse(stored);
+            if (!Array.isArray(records)) {
+                localStorage.setItem(key, JSON.stringify(value));
+                return;
+            }
+
+            const filteredRecords = records.filter(record => !isLegacyDemoRecord(record));
+            if (filteredRecords.length !== records.length) {
+                localStorage.setItem(key, JSON.stringify(filteredRecords));
+            }
+        } catch (error) {
             localStorage.setItem(key, JSON.stringify(value));
         }
     });
 
-    if (hasLegacyDemoData()) {
+    try {
+        const users = JSON.parse(localStorage.getItem("skillLinkUsers") || "[]");
+        if (Array.isArray(users)) {
+            const filteredUsers = users.filter(user => !isLegacyDemoRecord(user));
+            if (filteredUsers.length !== users.length) {
+                localStorage.setItem("skillLinkUsers", JSON.stringify(filteredUsers));
+            }
+        }
+    } catch (error) {
+        localStorage.setItem("skillLinkUsers", JSON.stringify([]));
+    }
+
+    try {
+        const currentUser = JSON.parse(localStorage.getItem("skillLinkUser") || "null");
+        if (isLegacyDemoRecord(currentUser)) {
+            localStorage.removeItem("skillLinkUser");
+        }
+    } catch (error) {
         localStorage.removeItem("skillLinkUser");
-        localStorage.removeItem("skillLinkUsers");
     }
 
     syncFreelancersFromUsers();
 }
-
 // Data Getters & Setters
 function normalizeJobRecord(job = {}) {
     const rawSkills = Array.isArray(job.skills)
