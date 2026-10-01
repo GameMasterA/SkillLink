@@ -65,33 +65,16 @@ function initMarketplaceData() {
         [STORAGE_KEYS.SAVED_JOBS]: []
     };
 
-    const demoMarkers = [
-        "usr-demo-fl",
-        "usr-demo-cl",
-        "John Doe",
-        "Sarah Miller",
-        "Amina Bello",
-        "Ataba O.",
-        "David K.",
-        "Marcus T."
-    ];
+    const demoEmails = new Set([
+        "admin@skilllink.com",
+        "freelancer@skilllink.com",
+        "client@skilllink.com"
+    ]);
     const isLegacyDemoRecord = item => {
         if (!item || typeof item !== "object") return false;
-        const candidateText = [
-            item.id,
-            item.name,
-            item.title,
-            item.clientName,
-            item.client_name,
-            item.jobTitle,
-            item.job_title,
-            item.company,
-            item.email,
-            item.summary,
-            item.lastMessage,
-            item.last_message
-        ].filter(Boolean).join(" ");
-        return demoMarkers.some(marker => candidateText.includes(marker));
+        const id = String(item.id || "").trim().toLowerCase();
+        const email = String(item.email || "").trim().toLowerCase();
+        return id.startsWith("usr-demo-") || demoEmails.has(email);
     };
 
     Object.entries(blankStore).forEach(([key, value]) => {
