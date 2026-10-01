@@ -493,7 +493,14 @@ async function createProposalRecord(proposalData) {
                     });
                 const existingProposal = Array.isArray(existingProposals) ? existingProposals[0] : null;
                 if (!lookupError && existingProposal) {
-                    const proposal = normalizeProposalRecord({ ...existingProposal, cloudConfirmed: true });
+                    const job = getStoredJobs().find(entry => String(entry.id) === String(existingProposal.job_id));
+                    const proposal = normalizeProposalRecord({
+                        ...existingProposal,
+                        job_title: job?.title || "Job Proposal",
+                        client_id: job?.clientId || job?.client_id || "",
+                        client_name: job?.client?.name || "Client",
+                        cloudConfirmed: true
+                    });
                     const proposals = getStoredProposals().filter(entry =>
                         String(entry.jobId) !== String(proposal.jobId) ||
                         String(entry.freelancerId) !== String(proposal.freelancerId)
