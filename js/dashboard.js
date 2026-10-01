@@ -311,6 +311,23 @@ function initClientDashboard() {
                 renderClientProjectsList();
             }
         });
+
+        const proposalsContainer = document.getElementById("clientProposalsList");
+        if (proposalsContainer && proposalsContainer.dataset.refreshScheduled !== "true") {
+            proposalsContainer.dataset.refreshScheduled = "true";
+            const refreshClientProposals = () => {
+                if (document.visibilityState !== "visible") return;
+                syncAccountWorkData(user.id, "client").then(result => {
+                    if (result.success) {
+                        renderClientStats();
+                        renderClientJobsTable();
+                        renderClientProposalsList();
+                    }
+                }).catch(error => console.warn("[SkillLink Client] Proposal refresh failed.", error));
+            };
+            window.setInterval(refreshClientProposals, 10000);
+            document.addEventListener("visibilitychange", refreshClientProposals);
+        }
     }
 }
 
